@@ -1,15 +1,20 @@
 import os
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Security
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
+from fastapi.security.api_key import APIKeyHeader
 
-app = FastAPI(title="Forge API", version="2.0.0")
+# ---------------------------------------------------------
+# API Key (Railway or fallback for local dev)
+# ---------------------------------------------------------
+API_KEY = os.getenv("API_KEY", "supersecret")
+api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
+
+app = FastAPI(title="Forge API", version="2.1.0")
 
 # ---------------------------------------------------------
 # Models
 # ---------------------------------------------------------
-
 class OptimiseRequest(BaseModel):
     package_goal: str = Field(..., description="t2i, i2i, t2v, i2v")
     prompt: str = Field(..., description="Raw user prompt text")
@@ -30,15 +35,11 @@ class ForgePackage(BaseModel):
     workflow_suggestions: List[str]
     package_goal: str
 
-
 # ---------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------
-
 def apply_safety(prompt: str) -> (str, Dict[str, Any]):
-    """
-    Safety filter: enforce NSFW rules, auto-clean IP/minor-coded tokens.
-    """
+    """Safety filter: enforce NSFW rules, auto-clean IP/minor-coded tokens."""
     safety_info = {"nsfw": "consensual only", "blocked": []}
     cleaned_prompt = prompt
 
@@ -49,7 +50,6 @@ def apply_safety(prompt: str) -> (str, Dict[str, Any]):
             cleaned_prompt = cleaned_prompt.replace(
                 token, "adult cosplayer lookalike (age 21+)"
             )
-
     return cleaned_prompt, safety_info
 
 
@@ -119,13 +119,12 @@ def build_menus_help() -> Dict[str, Any]:
         }
     }
 
-
 def forge_package(req: OptimiseRequest, overrides: Optional[Dict[str, Any]] = None) -> ForgePackage:
     cleaned_prompt, safety_info = apply_safety(req.prompt)
     config = build_config(overrides)
 
     return ForgePackage(
-        package_version="v2.0",
+        package_version="v2.1",
         positive=f"{cleaned_prompt}, vibrant colors, high detail",
         negative="lowres, blurry, overexposed, watermark, text",
         config=config,
@@ -145,31 +144,13 @@ def forge_package(req: OptimiseRequest, overrides: Optional[Dict[str, Any]] = No
         package_goal=req.package_goal
     )
 
-
-# ---------------------------------------------------------
-# Middleware – API Key
-# ---------------------------------------------------------
-
-API_KEY = os.getenv("API_KEY", "supersecret")  # Loaded from Railway env or fallback
-
-@app.middleware("http")
-async def require_api_key(request: Request, call_next):
-    if request.url.path.startswith("/optimise") or request.url.path.startswith("/verify"):
-        api_key = request.headers.get("x-api-key")
-        if not api_key or api_key != API_KEY:
-            return JSONResponse(
-                status_code=403,
-                content={"error": "Forbidden", "details": "Invalid or missing API key"},
-            )
-    return await call_next(request)
-
-
 # ---------------------------------------------------------
 # Routes
 # ---------------------------------------------------------
-
 @app.post("/optimise", response_model=ForgePackage)
-async def optimise(req: OptimiseRequest):
+async def optimise(req: OptimiseRequest, api_key: str = Security(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid or missing API key")
     try:
         package = forge_package(req)
         return package.dict()
@@ -178,16 +159,33 @@ async def optimise(req: OptimiseRequest):
 
 
 @app.post("/verify")
-async def verify(resources: Dict[str, Any]):
+async def verify(resources: Dict[str, Any], api_key: str = Security(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid or missing API key")
+    # Future: verify sha256 + licence info
     return {"status": "verified", "resources": resources}
 
 
 @app.post("/caption")
-async def caption(req: OptimiseRequest):
-    return {
-        "captions": [
-            f"Prompt: {req.prompt}",
-            "Alt text: futuristic skyline, neon reflections",
-            "#aiart #cyberpunk #TheForge"
-        ]
+async def caption(req: OptimiseRequest, api_key: str = Security(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid or missing API key")
+
+    captions = {
+        "hooks": [
+            f"{req.prompt} — rendered by The Forge 🔥",
+            f"What if {req.prompt.lower()}?"
+        ],
+        "narratives": [
+            f"A Forge-optimised vision: {req.prompt}.",
+            f"Creative output tuned for {req.package_goal.upper()} workflows."
+        ],
+        "technical": [
+            "Generated with Forge Optimised Prompt Package.",
+            "Configs: DPM++ 2M Karras | Steps: 30 | CFG: 7.0 | Res: 1024x768"
+        ],
+        "alt_text": f"{req.prompt}, styled for {req.package_goal.upper()}",
+        "hashtags": ["#AIart", "#TheForge", "#ResistAiArt"]
     }
+
+    return {"captions": captions}
