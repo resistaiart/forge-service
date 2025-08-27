@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -149,7 +150,7 @@ def forge_package(req: OptimiseRequest, overrides: Optional[Dict[str, Any]] = No
 # Middleware – API Key
 # ---------------------------------------------------------
 
-API_KEY = "supersecret"  # TODO: load from environment in production
+API_KEY = os.getenv("API_KEY", "supersecret")  # Loaded from Railway env or fallback
 
 @app.middleware("http")
 async def require_api_key(request: Request, call_next):
