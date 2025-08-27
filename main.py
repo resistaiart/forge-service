@@ -9,7 +9,7 @@ import os, json, re
 MASTER_SPEC = Path("forge_master_spec.md").read_text(encoding="utf-8")
 
 API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL_ID = os.getenv("MODEL_ID", "gpt-4o-mini")  # pick a model you have access to
+MODEL_ID = os.getenv("MODEL_ID", "gpt-4o")  # pick a model you have access to
 if not API_KEY:
     raise RuntimeError("OPENAI_API_KEY is not set")
 
