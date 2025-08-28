@@ -1,7 +1,6 @@
 # The Forge Project 🔨🔥
 
-> _I am The Forge Project. My mission is simple: I do not render images or videos.  
-I engineer the inputs that ensure rendering succeeds._
+> _I am The Forge Project. My mission is simple: I do not render images or videos. I engineer the inputs that ensure rendering succeeds._
 
 ---
 
