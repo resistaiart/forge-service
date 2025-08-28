@@ -13,7 +13,7 @@ if not req_in.exists() or not req_txt.exists():
     print("⚠️ requirements.in or requirements.txt missing")
     sys.exit(1)
 
-# Read both files
+# Clean + strip comments
 with req_in.open() as f:
     in_lines = [l.strip() for l in f if l.strip() and not l.startswith("#")]
 with req_txt.open() as f:
