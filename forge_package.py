@@ -1,37 +1,45 @@
 # forge_package.py
 import time
-import random
 from forge_prompts import build_prompts
 from forge_settings import build_settings
 from forge_resources import validate_resources
 from forge_captions import generate_captions
 from forge_diagnostics import generate_diagnostics
 from forge_benchmarking import run_benchmarks
-from forge_profiles import update_profile, load_profile
+from forge_profiles import update_profile, load_profile, adapt_settings, adapt_captions
 from forge_integrations import list_integrations
 
-# Simple versioning system (could be replaced with DB later)
 PACKAGE_VERSION = 1
 
-def build_package(package_goal, prompt, resources=None, caption=None, user_id="default"):
+def build_package(package_goal, prompt, resources=None, caption=None, user_id="default", descriptors=None):
+    """
+    Build a full Prompt Package.
+    If image descriptors are provided, they will enrich the prompt.
+    """
     global PACKAGE_VERSION
 
-    # Ensure resources is a list
     resources = resources or []
-
-    # Load user profile for adaptivity
     profile = load_profile(user_id)
 
-    # Core sections
-    positive_prompt, negative_prompt = build_prompts(prompt, profile)
-    settings = build_settings(profile)
+    # If image descriptors exist, enrich the base prompt
+    enriched_prompt = prompt
+    if descriptors:
+        desc_subject = descriptors.get("subject", "")
+        desc_style = descriptors.get("style", "")
+        desc_tags = ", ".join(descriptors.get("tags", []))
+        enriched_prompt = f"{prompt}, {desc_subject}, {desc_style}, {desc_tags}"
+
+    # Build prompt blocks
+    positive_prompt, negative_prompt = build_prompts(enriched_prompt, profile)
+    settings = build_settings(profile, package_goal)
+    settings = adapt_settings(settings, profile)
     resources_block = validate_resources(resources)
-    captions = generate_captions(prompt, caption, profile)
+    captions = generate_captions(enriched_prompt, caption, profile)
+    captions = adapt_captions(captions, profile)
     diagnostics = generate_diagnostics(settings, resources_block)
     benchmarks = run_benchmarks()
     integrations = list_integrations()
 
-    # Versioning
     package = {
         "version": PACKAGE_VERSION,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -49,11 +57,10 @@ def build_package(package_goal, prompt, resources=None, caption=None, user_id="d
 
     if caption:
         package["metadata"] = {"caption": caption}
+    if descriptors:
+        package["image_descriptors"] = descriptors
 
-    # Update profile (adaptivity)
     update_profile(user_id, profile)
-
-    # Increment version for next run
     PACKAGE_VERSION += 1
 
     return package
