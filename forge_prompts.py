@@ -3,6 +3,7 @@ import re
 import random
 from typing import Dict, List, Optional
 from forge_resources import validate_resources
+from forge_checkpoints import suggest_checkpoints  # NEW import
 
 # =====================
 # CONFIG
@@ -105,7 +106,8 @@ def optimise_prompt_package(
     goal: str = "t2i",
     resources: Optional[List] = None,
     caption: Optional[str] = None,
-    custom_weights: Optional[Dict] = None
+    custom_weights: Optional[Dict] = None,
+    checkpoint: Optional[str] = None
 ) -> Dict:
     """Build an optimised Forge-ready prompt package."""
 
@@ -120,7 +122,7 @@ def optimise_prompt_package(
     # Validate resources
     validated_resources = validate_resources(resources or [])
 
-    # Diagnostics (expanded ComfyUI rationale)
+    # Diagnostics
     diagnostics = {
         "cfg_reason": f"cfg {settings['cfg_scale']} tuned for {goal} balance",
         "sampler_choice": f"{settings['sampler']} chosen for stability + quality",
@@ -131,6 +133,9 @@ def optimise_prompt_package(
     }
     if goal == "t2v":
         diagnostics["fps_reason"] = f"{settings['fps']}fps for natural motion"
+
+    # Checkpoint integration
+    checkpoint_suggestions = suggest_checkpoints(checkpoint or settings.get("preferred_checkpoint", ""))
 
     # Assemble package
     package = {
@@ -150,7 +155,24 @@ def optimise_prompt_package(
             "prompt_length": len(weighted_prompt),
             "negative_length": len(negative_prompt),
             "resource_count": len(validated_resources),
-        }
+        },
+        "checkpoint_suggestions": checkpoint_suggestions,  # NEW
     }
 
     return package
+
+# --- Example usage ---
+if __name__ == "__main__":
+    test = optimise_prompt_package(
+        prompt="a cyberpunk samurai under neon rain, masterpiece, best quality",
+        goal="t2i",
+        resources=[
+            {"name": "Old Cyberpunk Model", "type": "model", "creator": "AI Artist"},
+            {"name": "NSFW dataset", "type": "dataset", "health": "inactive"},
+        ],
+        checkpoint="forge-base-v1.safetensors"
+    )
+
+    from pprint import pprint
+    print("=== Optimised Prompt Package ===")
+    pprint(test)
