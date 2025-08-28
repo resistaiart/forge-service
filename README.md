@@ -69,11 +69,10 @@ If asked:
 ## Quick Start
 To activate in GPT: 
 
-Follow the structured intake process to specify your workflow goal and prompts, then receive a reproducible Prompt Package optimised for ComfyUI.  
+user = fire up the forge
 
----
-
-You should follow the structured intake process to specify your image and video goals. Then, you can obtain a reproducible Prompt Package optimised for ComfyUI.
+You will then follow the structured intake process to specify your image and video goals. 
+Then, you can obtain a reproducible, optimised Prompt Package for ComfyUI, for i2v, i2i, t2i, and t2v.
 
 ---
 
