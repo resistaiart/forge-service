@@ -1,39 +1,71 @@
 # forge_image_analysis.py
-import os
 import requests
+import time
+import os
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 MODELS = {
-    "basic": "nlpconnect/vit-gpt2-image-captioning",
-    "detailed": "Salesforce/instructblip-vicuna-7b"
-    # style/subject could be mapped to future models or pipelines
+    "basic": "nlpconnect/vit-gpt2-image-captioning",        # fast, concise captions
+    "detailed": "Salesforce/instructblip-vicuna-7b"         # slower, detailed analysis
 }
+
+DEFAULT_RETRY_DELAY = 30
+MAX_RETRIES = 3
+
+
+def query_hf(model_id: str, payload: dict):
+    """
+    Send request to Hugging Face model with retry logic for cold starts.
+    """
+    url = f"https://api-inference.huggingface.co/models/{model_id}"
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            response = requests.post(url, headers=HEADERS, json=payload, timeout=120)
+            result = response.json()
+
+            # Error handling: cold start or model not ready
+            if isinstance(result, dict) and "error" in result:
+                error_message = result["error"]
+                if "loading" in error_message or "Not Found" in error_message:
+                    wait = result.get("estimated_time", DEFAULT_RETRY_DELAY)
+                    print(f"[Forge] {model_id} cold start (attempt {attempt}/{MAX_RETRIES}), retrying in {wait}s")
+                    time.sleep(wait)
+                    continue
+                # Other error → fail fast
+                raise Exception(f"Hugging Face API error: {error_message}")
+
+            # Successful result
+            return result
+
+        except Exception as e:
+            if attempt == MAX_RETRIES:
+                raise Exception(f"[Forge] Failed after {MAX_RETRIES} attempts: {str(e)}")
+            time.sleep(DEFAULT_RETRY_DELAY)
+
+    raise Exception(f"[Forge] {model_id} did not respond after retries")
+
 
 def analyse_image(image_url: str, mode: str = "basic"):
     """
-    Analyse an image using Hugging Face inference API.
-    Mode determines which model/tool is used.
+    Analyse image with either basic or detailed mode.
+    - basic: generates a short caption
+    - detailed: generates a more descriptive analysis
     """
-    model_id = MODELS.get(mode)
-    if not model_id:
-        return {"error": f"Unsupported mode: {mode}"}
+    if mode not in MODELS:
+        return {"error": f"Invalid mode '{mode}'. Use 'basic' or 'detailed'."}
 
-    api_url = f"https://api-inference.huggingface.co/models/{model_id}"
+    model_id = MODELS[mode]
 
-    payload = {"inputs": image_url}
-    try:
-        response = requests.post(api_url, headers=HEADERS, json=payload, timeout=60)
-        response.raise_for_status()
-        data = response.json()
+    # Basic model: just needs inputs
+    if mode == "basic":
+        payload = {"inputs": image_url}
+        result = query_hf(model_id, payload)
+        return {"mode": mode, "description": result[0].get("generated_text", "")}
 
-        if isinstance(data, list) and "generated_text" in data[0]:
-            return {mode: data[0]["generated_text"]}
-
-        return {mode: str(data)}
-
-    except requests.exceptions.RequestException as e:
-        return {"error": f"Request failed: {e}"}
-    except Exception as e:
-        return {"error": f"Unexpected error: {e}"}
+    # Detailed model: instruction-following
+    if mode == "detailed":
+        payload = {"inputs": {"image": image_url, "question": "Describe this image in extreme detail"}}
+        result = query_hf(model_id, payload)
+        return {"mode": mode, "description": result[0].get("generated_text", "")}
