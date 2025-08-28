@@ -17,18 +17,24 @@ def analyse_image(image_url: str):
             headers=HEADERS,
             json={"inputs": image_url}
         )
-        result = response.json()
+
+        # Debug: show raw response if it fails
+        try:
+            result = response.json()
+        except Exception:
+            return {"error": f"Non-JSON response: {response.text[:200]}"}
 
         if isinstance(result, list) and "generated_text" in result[0]:
             caption = result[0]["generated_text"]
         else:
-            return {"error": f"Unexpected response: {result}"}
+            return {"error": f"Unexpected response format: {result}"}
 
-        # Very simple heuristic split
+        # Build Forge descriptors
+        words = caption.split()
         descriptors = {
-            "subject": caption.split()[1] if len(caption.split()) > 1 else caption,
+            "subject": words[1] if len(words) > 1 else caption,
             "style": "photograph, natural lighting",
-            "tags": caption.split(),
+            "tags": words,
             "caption": caption
         }
         return descriptors
