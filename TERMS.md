@@ -1,3 +1,10 @@
+---
+title: Terms of Service
+---
+
+# Terms of Service
+<your content here>
+
 # Terms of Service for The Forge Project
 
 _Last updated: August 28, 2025_
