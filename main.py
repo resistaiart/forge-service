@@ -3,30 +3,19 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
-from pydantic import BaseModel, Field
-from typing import Optional, List, Any, Dict
 import uvicorn
 import logging
-import os
 
 from forge_prompts import optimise_prompt_package
 from forge_image_analysis import analyse_image
 
-# ---- Settings ----
-class Settings(BaseModel):
-    app_name: str = "Forge Service API"
-    cors_origins: str = os.getenv("CORS_ORIGINS", "*")
-    debug: bool = os.getenv("DEBUG", "false").lower() == "true"
-
-settings = Settings()
-
-# ---- Forge API ----
-app = FastAPI(title=settings.app_name, version="1.0")
+# Forge API
+app = FastAPI(title="Forge Service API", version="1.0")
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins.split(","),
+    allow_origins=["*"],   # tighten in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,80 +25,83 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO, format="[Forge] %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# ---- Request / Response Models ----
-class OptimiseRequest(BaseModel):
-    package_goal: str
-    prompt: str
-    resources: Optional[List[str]] = Field(default_factory=list)
-    caption: Optional[str] = ""
 
-class AnalyseRequest(BaseModel):
-    image_url: str
-    mode: Optional[str] = "basic"
+# ---------------------------
+# ROUTES
+# ---------------------------
 
-class ApiResponse(BaseModel):
-    outcome: str
-    result: Optional[Dict[str, Any]] = None
-    message: Optional[str] = None
-
-# ---- Endpoints ----
-@app.post("/optimise", response_model=ApiResponse)
-@app.post("/t2i", response_model=ApiResponse)  # alias
-@app.post("/t2v", response_model=ApiResponse)  # alias
-async def optimise(request: OptimiseRequest):
+@app.post("/optimise")
+@app.post("/t2i")  # alias
+@app.post("/t2v")  # alias
+async def optimise(request: Request):
     """
     Optimise a prompt package for [t2i] or [t2v].
     """
     try:
-        result = await run_in_threadpool(
+        payload = await request.json()
+        package_goal = payload.get("package_goal")
+        prompt = payload.get("prompt")
+        resources = payload.get("resources", [])
+        caption = payload.get("caption", "")
+
+        if not package_goal or not prompt:
+            return {"outcome": "error", "message": "missing required fields: package_goal and prompt"}
+
+        # Call optimiser (already returns {outcome, result, message})
+        return await run_in_threadpool(
             optimise_prompt_package,
-            request.package_goal,
-            request.prompt,
-            request.resources,
-            request.caption
+            prompt,
+            package_goal,
+            resources,
+            caption
         )
-        return ApiResponse(outcome="success", result=result)
 
     except Exception as e:
         logger.error(f"optimise failed: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content=ApiResponse(outcome="error", message=f"optimise failed {str(e)}").dict()
-        )
+        return {"outcome": "error", "message": f"optimise failed: {str(e)}"}
 
-@app.post("/analyse_image", response_model=ApiResponse)
-@app.post("/analyse", response_model=ApiResponse)  # alias
-async def analyse(request: AnalyseRequest):
+
+@app.post("/analyse_image")
+@app.post("/analyse")  # alias
+async def analyse(request: Request):
     """
-    Analyse an image in [basic] or [detailed] mode.
+    Analyse image in [basic] or [detailed] mode.
     """
     try:
-        result = await run_in_threadpool(analyse_image, request.image_url, None, request.mode)
-        return ApiResponse(outcome="success", result=result)
+        payload = await request.json()
+        image_url = payload.get("image_url")
+        mode = payload.get("mode", "basic")
+
+        if not image_url:
+            return {"outcome": "error", "message": "missing required field: image_url"}
+
+        # Call analyser (already returns {outcome, result, message})
+        return await run_in_threadpool(analyse_image, image_url, mode=mode)
 
     except Exception as e:
         logger.error(f"analyse failed: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content=ApiResponse(outcome="error", message=f"analyse failed {str(e)}").dict()
-        )
+        return {"outcome": "error", "message": f"analyse failed: {str(e)}"}
 
-@app.get("/health", response_model=ApiResponse)
+
+@app.get("/health")
 async def health():
     """
     Forge health probe.
     """
-    return ApiResponse(outcome="success", message="healthy")
+    return {"outcome": "success", "message": "healthy"}
 
-# ---- Global Error Handler ----
+
+# ---------------------------
+# GLOBAL ERROR HANDLER
+# ---------------------------
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled error: {str(exc)}")
-    return JSONResponse(
-        status_code=500,
-        content=ApiResponse(outcome="error", message="internal failure").dict()
-    )
+    return JSONResponse(status_code=500, content={"outcome": "error", "message": "internal failure"})
 
-# ---- Run ----
+
+# ---------------------------
+# DEV ENTRY POINT
+# ---------------------------
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=settings.debug)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
