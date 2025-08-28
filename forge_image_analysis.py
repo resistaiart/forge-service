@@ -25,9 +25,10 @@ PROVIDERS = {
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 
-def query_model(api_url: str, payload: dict, retries: int = 3):
+def query_model(api_url: str, payload: dict, provider: str, retries: int = 3):
     """
     Query Hugging Face Inference API with retry on cold start.
+    Returns Forge-branded messages if engine is loading.
     """
     for attempt in range(retries):
         response = requests.post(api_url, headers=HEADERS, json=payload, timeout=120)
@@ -37,11 +38,14 @@ def query_model(api_url: str, payload: dict, retries: int = 3):
         except Exception:
             return {"error": f"Non-JSON response: {response.text[:200]}"}
 
-        # Handle HF cold start
+        # Handle HF cold start with Forge aesthetic
         if "error" in result and "loading" in result["error"].lower():
             wait_time = result.get("estimated_time", 15)
-            time.sleep(wait_time)
-            continue  # retry after wait
+            return {
+                "status": "loading",
+                "message": f"[{provider} engine] loading… (~{wait_time}s)"
+            }
+
         return result
 
     return {"error": f"Model did not respond after {retries} attempts."}
@@ -54,7 +58,7 @@ def prepare_payload(provider: str, image_url: str = None, image_file: bytes = No
     cfg = PROVIDERS[provider]
 
     # For vit-gpt2: pass URL
-    if cfg["payload_type"] == "url":
+    if cfg["payload_type"] == "url" and image_url:
         return {"inputs": image_url}
 
     # For instructblip: must send base64 image + question prompt
@@ -70,7 +74,7 @@ def prepare_payload(provider: str, image_url: str = None, image_file: bytes = No
             }
         }
 
-    return {"error": "Invalid payload config or missing image file."}
+    return {"error": "Invalid payload config or missing image data."}
 
 
 def extract_caption(result):
@@ -94,7 +98,12 @@ def analyse_image(provider: str, image_url: str = None, image_file: bytes = None
     if "error" in payload:
         return payload
 
-    result = query_model(cfg["url"], payload)
+    result = query_model(cfg["url"], payload, provider)
+
+    # Pass through Forge cold-start message
+    if isinstance(result, dict) and result.get("status") == "loading":
+        return result
+
     caption = extract_caption(result)
     if not caption:
         return {"error": f"Image analysis failed: {result}"}
