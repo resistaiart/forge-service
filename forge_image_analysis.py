@@ -4,7 +4,7 @@ import os
 
 # Load Hugging Face API key from environment variable
 HF_TOKEN = os.getenv("HF_TOKEN")
-HF_API_URL = "https://api-inference.huggingface.co/models/pharma/clip-interrogator"
+HF_API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base"
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 def analyse_image(image_url: str):
