@@ -14,14 +14,14 @@ PACKAGE_VERSION = 1
 def build_package(package_goal, prompt, resources=None, caption=None, user_id="default", descriptors=None):
     """
     Build a full Prompt Package.
-    If image descriptors are provided, they will enrich the prompt.
+    If image descriptors are provided, they will enrich the prompt and be included.
     """
     global PACKAGE_VERSION
 
     resources = resources or []
     profile = load_profile(user_id)
 
-    # If image descriptors exist, enrich the base prompt
+    # If image descriptors exist, enrich the prompt
     enriched_prompt = prompt
     if descriptors:
         desc_subject = descriptors.get("subject", "")
@@ -29,7 +29,7 @@ def build_package(package_goal, prompt, resources=None, caption=None, user_id="d
         desc_tags = ", ".join(descriptors.get("tags", []))
         enriched_prompt = f"{prompt}, {desc_subject}, {desc_style}, {desc_tags}"
 
-    # Build prompt blocks
+    # Build package components
     positive_prompt, negative_prompt = build_prompts(enriched_prompt, profile)
     settings = build_settings(profile, package_goal)
     settings = adapt_settings(settings, profile)
