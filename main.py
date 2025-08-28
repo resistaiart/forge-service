@@ -1,58 +1,72 @@
 # main.py
-from flask import Flask, request, jsonify
-from forge_package import build_package
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+import uvicorn
+
+from forge_prompts import optimise_prompt_package
 from forge_image_analysis import analyse_image
 
-# Create Flask app (Gunicorn will look for this `app`)
-app = Flask(__name__)
+app = FastAPI(title="Forge Service API", version="1.0")
 
-@app.route("/optimise", methods=["POST"])
-def optimise():
+
+@app.post("/optimise")
+async def optimise(request: Request):
     """
-    Build an optimised Prompt Package from user request.
-    Accepts: package_goal, prompt, resources, caption, user_id, descriptors.
+    Optimise a prompt package for text-to-image (t2i), text-to-video (t2v), etc.
     """
-    data = request.json or {}
+    try:
+        payload = await request.json()
+        package_goal = payload.get("package_goal")
+        prompt = payload.get("prompt")
+        resources = payload.get("resources", [])
+        caption = payload.get("caption", "")
 
-    package_goal = data.get("package_goal")
-    prompt = data.get("prompt")
-    resources = data.get("resources", [])
-    caption = data.get("caption", "")
-    user_id = data.get("user_id", "default")
-    descriptors = data.get("descriptors", None)
+        if not package_goal or not prompt:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Missing required fields: package_goal and prompt"}
+            )
 
-    if not package_goal or not prompt:
-        return jsonify({"error": "Missing required fields: package_goal and prompt"}), 400
+        result = optimise_prompt_package(
+            package_goal=package_goal,
+            prompt=prompt,
+            resources=resources,
+            caption=caption
+        )
+        return result
 
-    package = build_package(
-        package_goal,
-        prompt,
-        resources,
-        caption,
-        user_id,
-        descriptors
-    )
-    return jsonify(package)
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Prompt optimisation failed: {str(e)}"}
+        )
 
 
-@app.route("/analyse_image", methods=["POST"])
-def analyse_image_endpoint():
+@app.post("/analyse_image")
+async def analyse(request: Request):
     """
-    Analyse an image (URL or base64).
-    Returns structured descriptors: subject, style, tags, caption.
+    Analyse an image in either [basic] (fast caption) or [detailed] (deep description) mode.
     """
-    data = request.json or {}
-    image_url = data.get("image_url")
+    try:
+        payload = await request.json()
+        image_url = payload.get("image_url")
+        mode = payload.get("mode", "basic")  # default = basic
 
-    if not image_url:
-        return jsonify({"error": "No image provided"}), 400
+        if not image_url:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Missing required field: image_url"}
+            )
 
-    descriptors = analyse_image(image_url)
-    return jsonify(descriptors)
+        result = analyse_image(image_url=image_url, mode=mode)
+        return result
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Image analysis failed: {str(e)}"}
+        )
 
 
-# This only runs if you start locally with `python main.py`
 if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 8000))
-    app.run(host="0.0.0.0", port=port)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
