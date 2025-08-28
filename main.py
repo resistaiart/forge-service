@@ -12,16 +12,16 @@ from forge_image_analysis import analyse_image
 # Forge API instance
 app = FastAPI(title="Forge Service API", version="1.0")
 
-# CORS (safe for now, restrict origins in production)
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # tighten in prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Logging setup
+# Logging
 logging.basicConfig(level=logging.INFO, format="[Forge] %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ async def optimise(request: Request):
         if not package_goal or not prompt:
             return JSONResponse(
                 status_code=400,
-                content={"error": "missing: package_goal and prompt"}
+                content={"outcome": "error", "message": "missing package_goal and prompt"}
             )
 
         result = await run_in_threadpool(
@@ -51,13 +51,13 @@ async def optimise(request: Request):
             resources,
             caption
         )
-        return result
+        return {"outcome": "success", "result": result}
 
     except Exception as e:
         logger.error(f"optimise failed: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"error": f"optimise failed: {str(e)}"}
+            content={"outcome": "error", "message": f"optimise failed {str(e)}"}
         )
 
 
@@ -74,17 +74,17 @@ async def analyse(request: Request):
         if not image_url:
             return JSONResponse(
                 status_code=400,
-                content={"error": "missing: image_url"}
+                content={"outcome": "error", "message": "missing image_url"}
             )
 
         result = await run_in_threadpool(analyse_image, image_url, None, mode)
-        return result
+        return {"outcome": "success", "result": result}
 
     except Exception as e:
         logger.error(f"analyse failed: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"error": f"analyse failed: {str(e)}"}
+            content={"outcome": "error", "message": f"analyse failed {str(e)}"}
         )
 
 
@@ -93,7 +93,7 @@ async def health():
     """
     Health check endpoint.
     """
-    return {"status": "healthy"}
+    return {"outcome": "success", "message": "healthy"}
 
 
 if __name__ == "__main__":
