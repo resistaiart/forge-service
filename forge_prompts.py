@@ -4,7 +4,9 @@ import random
 from typing import Dict, List, Optional
 from forge_resources import validate_resources
 
-# --- CONFIGURATION (Forge-minimalist, ComfyUI-ready) ---
+# =====================
+# CONFIG
+# =====================
 _CONFIG = {
     "keyword_weights": {
         "cyberpunk": 1.3,
@@ -20,9 +22,10 @@ _CONFIG = {
     "negative_prompt": (
         "blurry, low quality, watermark, text, signature, username, artist name, "
         "bad anatomy, extra limbs, fused fingers, distorted hands, deformed face, "
-        "poorly drawn hands, mutation, ugly, disfigured, bad proportions, "
-        "cropped, cloned face, malformed limbs, missing arms, missing legs, "
-        "too many fingers, long neck, jpeg artifacts, compression artifacts"
+        "poorly drawn hands, poorly drawn face, mutation, mutated, ugly, disfigured, "
+        "bad proportions, cloned face, malformed limbs, missing arms, missing legs, "
+        "extra arms, extra legs, mutated hands, fused fingers, too many fingers, "
+        "long neck, jpeg artifacts, compression artifacts"
     ),
     "settings": {
         "t2i": {
@@ -31,14 +34,9 @@ _CONFIG = {
             "resolution": "832x1216",
             "sampler": "DPM++ 2M Karras",
             "scheduler": "Karras",
-            "denoise": 0.0,
+            "denoise": 0.4,
             "batch_size": 1,
             "clip_skip": 2,
-            "fps": None,
-            "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
-            "lora": [],
-            "vae_tiling": False,
-            "hires_fix": True,
             "preferred_checkpoint": "forge-base-v1.safetensors",
         },
         "t2v": {
@@ -48,13 +46,9 @@ _CONFIG = {
             "sampler": "DPM++ 2M Karras",
             "scheduler": "Karras",
             "denoise": 0.25,
-            "batch_size": 8,
-            "clip_skip": 2,
+            "batch_size": 1,
             "fps": 24,
-            "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
-            "lora": [],
-            "vae_tiling": False,
-            "hires_fix": False,
+            "clip_skip": 2,
             "preferred_checkpoint": "forge-animate-v1.safetensors",
         },
         "upscale": {
@@ -63,53 +57,49 @@ _CONFIG = {
             "resolution": "1024x1024",
             "sampler": "Euler a",
             "scheduler": "Simple",
-            "denoise": 0.4,
+            "denoise": 0.2,
             "batch_size": 1,
-            "clip_skip": 2,
-            "fps": None,
-            "vae": "vae-ft-mse-840000-ema-pruned.safetensors",
-            "lora": [],
-            "vae_tiling": True,
-            "hires_fix": False,
+            "clip_skip": 1,
             "preferred_checkpoint": "forge-upscale-v1.safetensors",
         }
     }
 }
 
-# --- CORE UTILITIES ---
-
+# =====================
+# UTILITIES
+# =====================
 def clean_prompt(prompt: str) -> str:
-    """Remove redundant spaces, normalize punctuation, clean prompt."""
+    """Remove redundant spaces, normalize punctuation."""
     prompt = re.sub(r"\s+", " ", prompt).strip()
     prompt = re.sub(r",\s*,", ",", prompt)
     prompt = re.sub(r"\.\s*\.", ".", prompt)
     return prompt
 
 def weight_keywords(prompt: str, custom_weights: Optional[Dict] = None) -> str:
-    """Apply emphasis to key terms with configurable weighting."""
+    """Apply emphasis weighting to key terms."""
     weights = custom_weights or _CONFIG["keyword_weights"]
     for word in sorted(weights.keys(), key=len, reverse=True):
         weight = weights[word]
         pattern = re.compile(rf"\b{re.escape(word)}\b", re.IGNORECASE)
-        if pattern.search(prompt):
-            prompt = pattern.sub(f"(({word}:{weight}))", prompt)
+        prompt = pattern.sub(f"(({word}:{weight}))", prompt)
     return prompt
 
 def get_negative_prompt(additional_negatives: Optional[List[str]] = None) -> str:
-    """Return standard Forge negative prompt string."""
+    """Get negative prompt string with optional extras."""
     negative = _CONFIG["negative_prompt"]
     if additional_negatives:
         negative += ", " + ", ".join(additional_negatives)
     return negative
 
 def get_settings(goal: str = "t2i") -> Dict:
-    """Return full ComfyUI-ready settings for given goal."""
+    """Return settings for a given goal, add seed."""
     settings = _CONFIG["settings"].get(goal, _CONFIG["settings"]["t2i"]).copy()
     settings["seed"] = random.randint(1, 999999999)
     return settings
 
-# --- MAIN BUILDER ---
-
+# =====================
+# MAIN PACKAGE BUILDER
+# =====================
 def optimise_prompt_package(
     prompt: str,
     goal: str = "t2i",
@@ -117,21 +107,32 @@ def optimise_prompt_package(
     caption: Optional[str] = None,
     custom_weights: Optional[Dict] = None
 ) -> Dict:
-    """Build a Forge-ready, ComfyUI-compatible prompt package."""
+    """Build an optimised Forge-ready prompt package."""
+
+    # Clean + weight
     base_prompt = clean_prompt(prompt)
     weighted_prompt = weight_keywords(base_prompt, custom_weights)
+
+    # Negatives + settings
     negative_prompt = get_negative_prompt()
     settings = get_settings(goal)
+
+    # Validate resources
     validated_resources = validate_resources(resources or [])
 
+    # Diagnostics (expanded ComfyUI rationale)
     diagnostics = {
-        "cfg_reason": f"CFG {settings['cfg_scale']} tuned for {goal}",
-        "sampler_choice": f"{settings['sampler']} chosen for stability/quality",
-        "resolution_reason": f"{settings['resolution']} optimal for {goal}",
-        "resource_count": len(validated_resources),
-        "active_resources": [r["name"] for r in validated_resources if r["health"] == "active"],
+        "cfg_reason": f"cfg {settings['cfg_scale']} tuned for {goal} balance",
+        "sampler_choice": f"{settings['sampler']} chosen for stability + quality",
+        "resolution_reason": f"{settings['resolution']} optimal for {goal} workflow",
+        "denoise_reason": f"{settings['denoise']} keeps detail without chaos",
+        "batch_reason": f"batch {settings['batch_size']} set for resource efficiency",
+        "clip_skip_reason": f"clip_skip {settings['clip_skip']} for prompt adherence",
     }
+    if goal == "t2v":
+        diagnostics["fps_reason"] = f"{settings['fps']}fps for natural motion"
 
+    # Assemble package
     package = {
         "goal": goal,
         "positive_prompt": weighted_prompt,
@@ -142,7 +143,7 @@ def optimise_prompt_package(
         "profile_used": {
             "verbosity": "normal",
             "caption_style": "balanced",
-            "preferred_checkpoint": settings.get("preferred_checkpoint"),
+            "preferred_checkpoint": settings.get("preferred_checkpoint", "forge-base-v1.safetensors"),
         },
         "diagnostics": diagnostics,
         "metadata": {
@@ -151,18 +152,5 @@ def optimise_prompt_package(
             "resource_count": len(validated_resources),
         }
     }
-    return package
 
-# --- EXAMPLE RUN ---
-if __name__ == "__main__":
-    test = optimise_prompt_package(
-        prompt="a cyberpunk samurai under neon rain, masterpiece, best quality",
-        goal="t2i",
-        resources=[
-            {"name": "Old Cyberpunk Model", "type": "model", "creator": "AI Artist"},
-            {"name": "NSFW dataset", "type": "dataset", "health": "inactive"},
-        ],
-    )
-    from pprint import pprint
-    print("=== Forge Prompt Package (t2i) ===")
-    pprint(test)
+    return package
