@@ -1,3 +1,10 @@
+---
+title: Privacy Policy
+---
+
+# Privacy Policy
+<your content here>
+
 # Privacy Policy for The Forge Project
 
 _Last updated: August 28, 2025_
