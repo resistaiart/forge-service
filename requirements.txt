@@ -1,21 +1,19 @@
-# Web framework
 fastapi==0.111.0
 uvicorn==0.30.1
 gunicorn==23.0.0
-
-# HTTP requests
 requests==2.32.3
-
-# Image handling
 pillow==10.4.0
 
-# Hugging Face + ML stack
+# Hugging Face stack
 transformers==4.44.2
-torch==2.4.1
-accelerate==0.34.2
+huggingface-hub==0.24.6
+accelerate==0.33.0
+safetensors==0.4.4
 
-# Optional: if you want to test pipelines locally (helps with HF image captioning)
-safetensors==0.4.3
+# Torch (CPU version, fine for Railway)
+torch==2.3.1
+torchvision==0.18.1
+
 
 
 
