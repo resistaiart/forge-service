@@ -14,29 +14,33 @@ def optimise():
     resources = data.get("resources", [])
     caption = data.get("caption", "")
     user_id = data.get("user_id", "default")
+    descriptors = data.get("descriptors", None)
 
+    # Validation
     if not package_goal or not prompt:
         return jsonify({"error": "Missing required fields: package_goal and prompt"}), 400
 
-    package = build_package(package_goal, prompt, resources, caption, user_id)
+    # Build package with descriptors if present
+    package = build_package(
+        package_goal,
+        prompt,
+        resources,
+        caption,
+        user_id,
+        descriptors
+    )
+
     return jsonify(package)
 
 
 @app.route("/analyse_image", methods=["POST"])
 def analyse_image_endpoint():
     """
-    Analyse an uploaded image (by URL or base64).
+    Analyse an uploaded image (by URL).
     Returns structured descriptors: subject, style, tags, caption.
     """
     data = request.json or {}
     image_url = data.get("image_url")
 
     if not image_url:
-        return jsonify({"error": "No image provided"}), 400
-
-    descriptors = analyse_image(image_url)
-    return jsonify(descriptors)
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+        return jsonify({"error": "No i
