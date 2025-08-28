@@ -1,9 +1,21 @@
-fastapi
-uvicorn
-requests
-pillow
-transformers
-torch
-gunicorn
+# Web framework
+fastapi==0.111.0
+uvicorn==0.30.1
+gunicorn==23.0.0
+
+# HTTP requests
+requests==2.32.3
+
+# Image handling
+pillow==10.4.0
+
+# Hugging Face + ML stack
+transformers==4.44.2
+torch==2.4.1
+accelerate==0.34.2
+
+# Optional: if you want to test pipelines locally (helps with HF image captioning)
+safetensors==0.4.3
+
 
 
