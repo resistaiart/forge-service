@@ -1,0 +1,16 @@
+# Forge AI core dependencies
+fastapi==0.111.0
+uvicorn==0.30.1
+gunicorn==23.0.0
+requests==2.32.3
+pillow==10.4.0
+
+# Hugging Face + Transformers stack
+transformers==4.44.2
+huggingface-hub==0.24.6
+accelerate==0.33.0
+safetensors==0.4.4
+
+# PyTorch stack
+torch==2.3.1
+torchvision==0.18.1
