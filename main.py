@@ -1,20 +1,23 @@
 # main.py
-import os
-import logging
-import requests
-from fastapi import FastAPI, Request, HTTPException, Query
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Literal
 import uvicorn
+import logging
+import os
 
 # Import existing modules
 from forge_prompts import optimise_prompt_package
 from forge_image_analysis import analyse_image
 from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise_i2v_package
+
+# Import new sealed workshop orchestration
 from forge_optimizer import optimize_sealed
+from forge_public_interface import PackageGoal
+from forge_settings import get_defaults, infer_goal_from_prompt
 
 # =====================
 # SETTINGS
@@ -43,53 +46,6 @@ app.add_middleware(
 # Logging
 logging.basicConfig(level=logging.INFO, format="[Forge] %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
-
-# =====================
-# CHECKPOINT SEARCH HELPERS
-# =====================
-def search_hf_models(query="stable-diffusion", limit=5):
-    url = f"https://huggingface.co/api/models?search={query}"
-    resp = requests.get(url, timeout=10)
-    resp.raise_for_status()
-    models = resp.json()
-    return [
-        {
-            "name": m.get("modelId"),
-            "source": "HuggingFace",
-            "url": f"https://huggingface.co/{m.get('modelId')}"
-        }
-        for m in models[:limit]
-    ]
-
-def search_civitai_models(limit=5):
-    url = f"https://civitai.com/api/v1/models?types=Checkpoint&limit={limit}"
-    resp = requests.get(url, timeout=10)
-    resp.raise_for_status()
-    models = resp.json().get("items", [])
-    return [
-        {
-            "name": m.get("name"),
-            "source": "CivitAI",
-            "url": f"https://civitai.com/models/{m.get('id')}"
-        }
-        for m in models
-    ]
-
-# =====================
-# NEW ROUTE: CHECKPOINT LOOKUP
-# =====================
-@app.get("/checkpoints")
-async def list_checkpoints(q: str = Query("stable-diffusion"), limit: int = Query(5)):
-    """
-    Search Hugging Face + CivitAI for available checkpoints.
-    """
-    try:
-        hf = search_hf_models(q, limit)
-        civit = search_civitai_models(limit)
-        return {"outcome": "success", "results": hf + civit}
-    except Exception as e:
-        logger.error(f"Checkpoint lookup failed: {e}")
-        return {"outcome": "error", "message": str(e)}
 
 # =====================
 # REQUEST/RESPONSE MODELS
@@ -123,13 +79,22 @@ async def optimise_v2(request: OptimiseRequest):
         logger.info(f"Sealed workshop request: {request.package_goal}")
         request_dict = request.dict()
         result = await run_in_threadpool(optimize_sealed, request_dict)
+
+        # Enrich response with menus and display metadata
+        result["menus"] = ["variants", "prompt", "config", "workflow", "help"]
+        result["display"] = {
+            "title": request.prompt[:60] + "...",
+            "subtitle": f"Goal: {request.package_goal.upper()}",
+            "notes": [
+                "CFG, steps, and seed fixed for reproducibility",
+                "ComfyUI workflow patch included"
+            ]
+        }
+
         return {"outcome": "success", "result": result}
     except ValueError as e:
         if "Content violation" in str(e):
-            return JSONResponse(
-                status_code=400,
-                content={"outcome": "error", "message": f"Content blocked: {str(e)}"}
-            )
+            return JSONResponse(status_code=400, content={"outcome": "error", "message": f"Content blocked: {str(e)}"})
         logger.error(f"Validation error in sealed workshop: {e}")
         return {"outcome": "error", "message": f"Validation error: {str(e)}"}
     except Exception as e:
@@ -137,21 +102,15 @@ async def optimise_v2(request: OptimiseRequest):
         return {"outcome": "error", "message": f"Internal optimization error: {str(e)}"}
 
 # =====================
-# ROUTES - LEGACY ENDPOINTS (LOCKED PACKAGE OUTPUT)
+# ROUTES - LEGACY ENDPOINTS
 # =====================
 @app.post("/optimise", response_model=StandardResponse)
 @app.post("/t2i", response_model=StandardResponse)
 @app.post("/t2v", response_model=StandardResponse)
 async def optimise_legacy(request: OptimiseRequest):
-    """
-    Legacy optimization endpoint - maintained for backward compatibility
-    Returns locked package format with checkpoint links.
-    """
     try:
         logger.info(f"Legacy optimization request: {request.package_goal}")
-        
-        # get raw optimisation
-        raw = await run_in_threadpool(
+        result = await run_in_threadpool(
             optimise_prompt_package,
             request.prompt,
             request.package_goal,
@@ -159,26 +118,7 @@ async def optimise_legacy(request: OptimiseRequest):
             request.caption,
             request.custom_weights
         )
-
-        # checkpoint suggestions
-        checkpoints = search_hf_models(request.prompt, 3) + search_civitai_models(3)
-
-        # format into locked text package
-        package_text = (
-            f"**Positive Prompt:**\n```\n{raw.get('positive','')}\n```\n\n"
-            f"**Negative Prompt:**\n```\n{raw.get('negative','')}\n```\n\n"
-            f"**Config ⚙️**\n"
-            f"- sampler: {raw.get('config',{}).get('sampler','')}\n"
-            f"- steps: {raw.get('config',{}).get('steps','')}\n"
-            f"- cfg: {raw.get('config',{}).get('cfg','')}\n"
-            f"- resolution: {raw.get('config',{}).get('resolution','')}\n"
-            f"- seed: {raw.get('config',{}).get('seed','')}\n\n"
-            f"**Checkpoint 🗂️**\n" +
-            "\n".join([f"- [{c['name']} ({c['source']})]({c['url']})" for c in checkpoints])
-        )
-
-        return {"outcome": "success", "result": {"package": package_text}}
-
+        return {"outcome": "success", "result": result}
     except Exception as e:
         logger.error(f"Legacy optimization failed: {e}")
         return {"outcome": "error", "message": f"Optimization failed: {str(e)}"}
@@ -229,6 +169,31 @@ async def analyse(request: AnalyseRequest):
         return {"outcome": "error", "message": f"Image analysis failed: {str(e)}"}
 
 # =====================
+# NEW INTAKE/DEFAULT ENDPOINTS
+# =====================
+@app.get("/defaults", response_model=StandardResponse)
+def get_defaults_route():
+    try:
+        data = get_defaults()
+        return {"outcome": "success", "result": data}
+    except Exception as e:
+        logger.error(f"Failed to get defaults: {e}")
+        return {"outcome": "error", "message": str(e)}
+
+@app.post("/intake/validate", response_model=StandardResponse)
+async def intake_validate_route(request: Request):
+    try:
+        payload = await request.json()
+        prompt = payload.get("prompt", "")
+        if not prompt:
+            raise ValueError("Missing prompt")
+        result = infer_goal_from_prompt(prompt)
+        return {"outcome": "success", "result": result}
+    except Exception as e:
+        logger.error(f"Goal inference failed: {e}")
+        return {"outcome": "error", "message": f"Goal inference failed: {str(e)}"}
+
+# =====================
 # HEALTH & UTILITY ENDPOINTS
 # =====================
 @app.get("/health", response_model=StandardResponse)
@@ -244,7 +209,6 @@ async def version():
             "legacy": "/optimise, /t2i, /t2v, /optimise/i2i, /optimise/t2v",
             "sealed_workshop": "/v2/optimise",
             "analysis": "/analyse",
-            "checkpoints": "/checkpoints",
             "health": "/health"
         }
     }
@@ -255,10 +219,7 @@ async def version():
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled error: {str(exc)}")
-    return JSONResponse(
-        status_code=500,
-        content={"outcome": "error", "message": "internal failure"}
-    )
+    return JSONResponse(status_code=500, content={"outcome": "error", "message": "internal failure"})
 
 # =====================
 # RUN
