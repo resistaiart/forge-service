@@ -1,7 +1,9 @@
 # forge_safety.py - Safety scrubbing logic for Forge
 
+# 🚫 absolutely blocked content (never allowed)
 BLOCKED_CONTENT = ["minors", "underage", "non-consensual", "sexual violence"]
 
+# 🔄 replace youth-coded tokens with safe adult alternatives
 YOUTH_CODED_TOKENS = {
     "misty": "adult cosplayer (age 21+)",
     "jessie": "adult character (age 21+)",
@@ -11,9 +13,11 @@ YOUTH_CODED_TOKENS = {
 def safety_scrub(prompt: str, allow_nsfw: bool = False) -> str:
     """
     Scrub user prompt for disallowed or unsafe content.
-    - Blocks content with disallowed terms.
-    - Replaces youth-coded tokens with safe alternatives.
-    - Allows NSFW if explicitly enabled (18+ assumption).
+    
+    Rules:
+    - Always blocks absolute banned content (minors, underage, non-consensual, sexual violence).
+    - Replaces youth-coded tokens with explicit adult-safe alternatives.
+    - NSFW terms are blocked unless allow_nsfw=True (18+ mode).
     """
     if not isinstance(prompt, str):
         raise ValueError("Prompt must be a string")
