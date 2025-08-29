@@ -54,13 +54,13 @@ DEFAULT_VALUES = {
     "compatibility": ["SD1.5", "SDXL"]
 }
 
-# Resource type patterns for auto-detection
+# Resource type patterns for auto-detection - CORRECTED REGEX PATTERNS
 RESOURCE_PATTERNS = {
-    ResourceType.MODEL: re.compile(r\.(safetensors|ckpt|pt|pth)$|model|checkpoint, re.IGNORECASE),
-    ResourceType.LORA: re.compile(r\.(lora|lycoris)$|lora|lycoris, re.IGNORECASE),
-    ResourceType.EMBEDDING: re.compile(r\.(pt|bin)$|embedding|textualinversion, re.IGNORECASE),
-    ResourceType.DATASET: re.compile(r\.(zip|tar|jsonl|parquet)$|dataset|training data, re.IGNORECASE),
-    ResourceType.CODE: re.compile(r\.(py|js|json)$|code|script|implementation, re.IGNORECASE),
+    ResourceType.MODEL: re.compile(r'\.(safetensors|ckpt|pt|pth)$|model|checkpoint', re.IGNORECASE),
+    ResourceType.LORA: re.compile(r'\.(lora|lycoris)$|lora|lycoris', re.IGNORECASE),
+    ResourceType.EMBEDDING: re.compile(r'\.(pt|bin)$|embedding|textualinversion', re.IGNORECASE),
+    ResourceType.DATASET: re.compile(r'\.(zip|tar|jsonl|parquet)$|dataset|training data', re.IGNORECASE),
+    ResourceType.CODE: re.compile(r'\.(py|js|json)$|code|script|implementation', re.IGNORECASE),
 }
 
 # Auto-tagging rules
