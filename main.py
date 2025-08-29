@@ -18,6 +18,39 @@ from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise
 from forge_optimizer import optimize_sealed
 
 # =====================
+# CHECKPOINT SEARCH HELPERS
+# =====================
+def search_hf_models(query="stable-diffusion", limit=5):
+    url = f"https://huggingface.co/api/models?search={query}"
+    resp = requests.get(url, timeout=10)
+    resp.raise_for_status()
+    models = resp.json()
+    return [{"name": m.get("modelId"), "source": "HuggingFace"} for m in models[:limit]]
+
+def search_civitai_models(limit=5):
+    url = f"https://civitai.com/api/v1/models?types=Checkpoint&limit={limit}"
+    resp = requests.get(url, timeout=10)
+    resp.raise_for_status()
+    models = resp.json().get("items", [])
+    return [{"name": m.get("name"), "source": "CivitAI"} for m in models]
+
+# =====================
+# NEW ROUTE: CHECKPOINT LOOKUP
+# =====================
+@app.get("/checkpoints")
+async def list_checkpoints(q: str = Query("stable-diffusion"), limit: int = Query(5)):
+    """
+    Search Hugging Face + CivitAI for available checkpoints.
+    """
+    try:
+        hf = search_hf_models(q, limit)
+        civit = search_civitai_models(limit)
+        return {"outcome": "success", "results": hf + civit}
+    except Exception as e:
+        logger.error(f"Checkpoint lookup failed: {e}")
+        return {"outcome": "error", "message": str(e)}
+
+# =====================
 # SETTINGS
 # =====================
 class Settings(BaseModel):
