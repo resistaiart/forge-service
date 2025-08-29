@@ -138,6 +138,7 @@ async def optimise_v2(request: OptimiseRequest):
 async def optimise_legacy(request: OptimiseRequest):
     """
     Legacy optimization endpoint - maintained for backward compatibility
+    Now also returns checkpoint suggestions.
     """
     try:
         logger.info(f"Legacy optimization request: {request.package_goal}")
@@ -150,8 +151,11 @@ async def optimise_legacy(request: OptimiseRequest):
             request.caption,
             request.custom_weights
         )
-        
-        return {"outcome": "success", "result": result}
+
+        # ✅ add checkpoint suggestions here
+        checkpoints = search_hf_models(request.package_goal, 3) + search_civitai_models(3)
+
+        return {"outcome": "success", "result": result, "checkpoints": checkpoints}
 
     except Exception as e:
         logger.error(f"Legacy optimization failed: {e}")
@@ -229,7 +233,7 @@ async def version():
             "legacy": "/optimise, /t2i, /t2v, /optimise/i2i, /optimise/t2v",
             "sealed_workshop": "/v2/optimise",
             "analysis": "/analyse",
-            "checkpoints": "/checkpoints",  # ✅ added here
+            "checkpoints": "/checkpoints",
             "health": "/health"
         }
     }
