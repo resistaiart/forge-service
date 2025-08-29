@@ -11,7 +11,7 @@ import os
 
 # Import existing modules
 from forge_prompts import optimise_prompt_package
-from forge_image_analysis import analyse_image
+from forge_image_analysis import analyse_image, analyse_sealed   # 🔥 added analyse_sealed
 from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise_i2v_package
 
 # Import new sealed workshop orchestration
@@ -83,6 +83,17 @@ async def optimise_v2(request: OptimiseRequest):
     except Exception as e:
         logger.error(f"Sealed workshop error: {e}")
         return {"outcome": "error", "message": f"Internal optimization error: {str(e)}"}
+
+@app.post("/v2/analyse", response_model=StandardResponse)   # 🔥 NEW sealed route
+async def analyse_v2(request: AnalyseRequest):
+    try:
+        logger.info(f"Sealed analysis request: {request.image_url}")
+        request_dict = request.dict()
+        result = await run_in_threadpool(analyse_sealed, request_dict)
+        return {"outcome": "success", "result": result}
+    except Exception as e:
+        logger.error(f"Sealed analysis error: {e}")
+        return {"outcome": "error", "message": f"Internal analysis error: {str(e)}"}
 
 # =====================
 # ROUTES - LEGACY ENDPOINTS
@@ -165,7 +176,7 @@ async def version():
         "service": "The Forge API",
         "endpoints": {
             "legacy": "/optimise, /t2i, /t2v, /optimise/i2i, /optimise/t2v",
-            "sealed_workshop": "/v2/optimise",
+            "sealed_workshop": "/v2/optimise, /v2/analyse",
             "analysis": "/analyse",
             "health": "/health",
             "manifest": "/manifest"
