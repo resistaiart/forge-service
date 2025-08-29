@@ -2,7 +2,9 @@
 import random
 import re
 from typing import Dict, List, Optional, Any
-from .forge_prompts import clean_prompt, analyze_prompt_intent, weight_keywords, extract_keywords
+
+# Use absolute imports (no dots)
+from forge_prompts import clean_prompt, analyze_prompt_intent, weight_keywords
 
 # Video-specific configuration
 VIDEO_MODELS = {
@@ -20,16 +22,6 @@ def optimise_i2i_package(
 ) -> Dict[str, Any]:
     """
     Optimize a package for Image-to-Image generation.
-    
-    Args:
-        prompt: Text guidance for the transformation
-        input_image: Base64 encoded image or image path/URL
-        denoise_strength: How much to alter the original image (0.0-1.0)
-        resources: Additional resources or LoRAs to use
-        caption: Description of the input image for context
-    
-    Returns:
-        Complete ComfyUI workflow package for I2I
     """
     # Clean and analyze the prompt
     base_prompt = clean_prompt(prompt)
@@ -38,7 +30,7 @@ def optimise_i2i_package(
     
     # Get base settings and adapt for I2I
     base_settings = _get_base_settings("i2i", intent)
-    base_settings["denoise"] = max(0.1, min(1.0, denoise_strength))  # Clamp to valid range
+    base_settings["denoise"] = max(0.1, min(1.0, denoise_strength))
     
     # Generate context-aware negative prompt
     negative_prompt = _get_negative_prompt(intent)
@@ -74,17 +66,6 @@ def optimise_t2v_package(
 ) -> Dict[str, Any]:
     """
     Optimize a package for Text-to-Video generation.
-    
-    Args:
-        prompt: Text description of the video to generate
-        num_frames: Number of frames in the output video
-        fps: Frames per second
-        motion_intensity: Level of motion in video (low, medium, high)
-        resources: Additional resources or LoRAs to use
-        caption: Additional context about the desired video
-    
-    Returns:
-        Complete ComfyUI workflow package for T2V
     """
     # Clean and analyze the prompt
     base_prompt = clean_prompt(prompt)
@@ -133,19 +114,6 @@ def optimise_i2v_package(
 ) -> Dict[str, Any]:
     """
     Optimize a package for Image-to-Video generation.
-    
-    Args:
-        prompt: Text guidance for the animation
-        input_image: Base64 encoded image or image path/URL
-        num_frames: Number of frames in the output video
-        fps: Frames per second
-        motion_intensity: Level of motion in video (low, medium, high)
-        denoise_strength: How much to alter the original image
-        resources: Additional resources or LoRAs to use
-        caption: Description of the input image for context
-    
-    Returns:
-        Complete ComfyUI workflow package for I2V
     """
     # Clean and analyze the prompt
     base_prompt = clean_prompt(prompt)
@@ -155,7 +123,7 @@ def optimise_i2v_package(
     # Get video-specific settings
     settings = _get_video_settings(intent, num_frames, fps, motion_intensity)
     settings["denoise"] = max(0.1, min(1.0, denoise_strength))
-    settings["model"] = VIDEO_MODELS["svd"]  # SVD is typically used for I2V
+    settings["model"] = VIDEO_MODELS["svd"]
     
     # Video-specific negative prompt
     negative_prompt = _get_video_negative_prompt(intent)
@@ -207,7 +175,7 @@ def _adapt_prompt_for_video(prompt: str, intent: Dict[str, str]) -> str:
     
     if not has_motion:
         # Add appropriate motion description
-        motion_level = "medium"  # Default
+        motion_level = "medium"
         motion_desc = motion_keywords[motion_level][0]
         weighted_prompt = f"{weighted_prompt}, {motion_desc}"
     
@@ -222,14 +190,12 @@ def _get_video_settings(
     """
     Get video-specific generation settings.
     """
-    # Map motion intensity to motion_bucket_id (SVD parameter)
     motion_bucket_map = {
         "low": 80,
         "medium": 127,
         "high": 180
     }
     
-    # Map motion intensity to augmentation_level
     augmentation_map = {
         "low": 0.0,
         "medium": 0.1,
@@ -238,11 +204,11 @@ def _get_video_settings(
     
     return {
         "model": VIDEO_MODELS["svd_xt"],
-        "num_frames": max(14, min(100, num_frames)),  # Reasonable limits
-        "fps": max(1, min(30, fps)),  # Reasonable limits
+        "num_frames": max(14, min(100, num_frames)),
+        "fps": max(1, min(30, fps)),
         "motion_bucket_id": motion_bucket_map.get(motion_intensity, 127),
         "augmentation_level": augmentation_map.get(motion_intensity, 0.1),
-        "cfg_scale": 3.5,  # Lower CFG for video often works better
+        "cfg_scale": 3.5,
         "steps": 25,
         "sampler": "Euler",
         "scheduler": "Simple"
@@ -274,9 +240,9 @@ def _generate_video_diagnostics(settings: Dict[str, Any], intent: Dict[str, str]
         "detected_mood": intent["mood"]
     }
 
-# Shared helper functions (could be imported from forge_prompts)
+# Shared helper functions
 def _get_base_settings(goal: str, intent: Dict[str, str]) -> Dict[str, Any]:
-    """Get base generation settings (simplified version)."""
+    """Get base generation settings."""
     base = {
         "cfg_scale": 7.5,
         "steps": 28,
@@ -293,40 +259,13 @@ def _get_base_settings(goal: str, intent: Dict[str, str]) -> Dict[str, Any]:
     return base
 
 def _get_negative_prompt(intent: Dict[str, str]) -> str:
-    """Get style-aware negative prompt (simplified version)."""
+    """Get style-aware negative prompt."""
     base = "blurry, low quality, watermark, artifacts, bad anatomy"
     return base
 
 def _generate_diagnostics(settings: Dict[str, Any], intent: Dict[str, str], goal: str) -> Dict[str, str]:
-    """Generate basic diagnostics (simplified version)."""
+    """Generate basic diagnostics."""
     return {
         "cfg_reason": f"CFG {settings['cfg_scale']} for {intent['style']} style",
         "goal": goal
     }
-
-## Usage Examples
-# Image-to-Image example
-i2i_package = optimise_i2i_package(
-    prompt="transform into cyberpunk style with neon lights",
-    input_image="base64_encoded_image_data",
-    denoise_strength=0.8,
-    caption="A portrait photo to be cyberpunk-ified"
-)
-
-# Text-to-Video example  
-t2v_package = optimise_t2v_package(
-    prompt="a cyberpunk cityscape with flying cars and neon signs",
-    num_frames=30,
-    fps=10,
-    motion_intensity="high"
-)
-
-# Image-to-Video example
-i2v_package = optimise_i2v_package(
-    prompt="animate with gentle camera movement",
-    input_image="base64_encoded_image_data",
-    num_frames=24,
-    fps=8,
-    motion_intensity="low",
-    denoise_strength=0.4
-)
