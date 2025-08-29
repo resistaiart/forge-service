@@ -1,6 +1,4 @@
 ### Enhanced `forge_settings.py`
-
-```python
 # forge_settings.py
 import random
 import logging
@@ -275,4 +273,3 @@ if __name__ == "__main__":
         print(f"\n  Explanations:")
         for param, explanation in explanations.items():
             print(f"    {param}: {explanation}")
-```
