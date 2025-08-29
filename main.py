@@ -1,26 +1,35 @@
 # main.py
-from fastapi import FastAPI, Request, HTTPException
+import os
+import logging
+import requests   # ✅ added for Hugging Face + CivitAI lookups
+from fastapi import FastAPI, Request, HTTPException, Query  # ✅ added Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Literal
 import uvicorn
-import logging
-import os
 
 # Import existing modules
 from forge_prompts import optimise_prompt_package
 from forge_image_analysis import analyse_image
 from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise_i2v_package
-
-# Import new sealed workshop orchestration
 from forge_optimizer import optimize_sealed
+
+# =====================
+# SETTINGS (moved above app init)
+# =====================
+class Settings(BaseModel):
+    app_name: str = "Forge Service API"
+    cors_origins: str = os.getenv("CORS_ORIGINS", "*")
+    debug: bool = os.getenv("DEBUG", "False").lower() == "true"
+
+settings = Settings()
 
 # =====================
 # APP INIT
 # =====================
-app = FastAPI(title=settings.app_name, version="2.0")  # Bumped to v2.0 for sealed workshop
+app = FastAPI(title=settings.app_name, version="2.0")  # safe now
 
 # CORS middleware
 app.add_middleware(
