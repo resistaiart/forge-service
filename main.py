@@ -58,7 +58,7 @@ class OptimiseRequest(BaseModel):
 
 class AnalyseRequest(BaseModel):
     image_url: str = Field(..., description="The URL of the image to analyse")
-    mode: Literal["basic", "detailed"] = Field("basic", description="Analysis mode")
+    mode: Literal["basic", "detailed", "tags"] = Field("basic", description="Analysis mode")  # 🔥 patched
 
 class StandardResponse(BaseModel):
     outcome: Literal["success", "error"]
