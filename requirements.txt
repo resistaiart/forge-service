@@ -1,8 +1,25 @@
+```txt
+# Core Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
+
+# HTTP & Networking
 requests==2.31.0
-Pillow==10.0.1
+
+# Data Validation & Serialization
 pydantic==2.6.3
+python-multipart==0.0.6  # Required for file upload support
+
+# Image Processing
+Pillow==10.0.1
+
+# Security & Rate Limiting
 slowapi==0.1.9
 python-dotenv==1.0.1
+
+# System & Monitoring
 psutil==5.9.8
+
+# Utilities
+pyyaml==6.0.1  # For YAML configuration files
+```
