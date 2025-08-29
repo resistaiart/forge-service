@@ -1,8 +1,8 @@
 # The Forge Project 🔨🔥
 
-> **Stop guessing your AI art settings. Generate optimized, production-ready prompt packages for Stable Diffusion and ComfyUI.**
+> **Generate optimised, production-ready prompt packages for Stable Diffusion and ComfyUI**
 
-The Forge analyzes your goal and crafts a perfect set of instructions—prompts, model settings, negative prompts, and resources—to get the best possible output from your AI image and video generation workflows.
+The Forge analyses your goal and crafts a perfect set of instructions—prompts, model settings, negative prompts, and resources—to get the best possible output from your AI image and video generation workflows.
 
 ---
 
@@ -10,7 +10,7 @@ The Forge analyzes your goal and crafts a perfect set of instructions—prompts,
 
 ### For End Users (Using the API)
 
-**1. Analyze an image to get a detailed description:**
+**1. Analyse an image to get a detailed description:**
 ```bash
 curl -X POST https://your-forge-api.com/analyse \
   -H "Content-Type: application/json" \
@@ -20,7 +20,7 @@ curl -X POST https://your-forge-api.com/analyse \
   }'
 ```
 
-**2. Generate an optimized prompt package for AI art:**
+**2. Generate an optimised prompt package for AI art:**
 ```bash
 curl -X POST https://your-forge-api.com/optimise \
   -H "Content-Type: application/json" \
@@ -33,7 +33,7 @@ curl -X POST https://your-forge-api.com/optimise \
 
 ### For ChatGPT Users
 
-Simply say: **"Fire up the forge"** to start creating optimized prompt packages through conversation.
+Simply say: **"Fire up the forge"** to start creating optimised prompt packages through conversation.
 
 ---
 
@@ -41,7 +41,7 @@ Simply say: **"Fire up the forge"** to start creating optimized prompt packages 
 
 The Forge takes your creative ideas and turns them into engineered specifications that AI systems understand perfectly:
 
-- **🎯 Prompt Optimization**: Transforms basic prompts into highly detailed, weighted instructions
+- **🎯 Prompt Optimisation**: Transforms basic prompts into highly detailed, weighted instructions
 - **🖼️ Image Analysis**: Provides detailed descriptions and captions for any image
 - **⚙️ Smart Settings**: Automatically recommends optimal model settings, samplers, and parameters
 - **📦 Resource Management**: Validates and suggests the best models, LoRAs, and checkpoints
@@ -75,7 +75,7 @@ The Forge takes your creative ideas and turns them into engineered specification
   },
   "resources": ["cyberpunk_lora.safetensors"],
   "diagnostics": {
-    "cfg_reason": "CFG 8.0 optimized for cyberpunk style",
+    "cfg_reason": "CFG 8.0 optimised for cyberpunk style",
     "detected_style": "cyberpunk"
   }
 }
@@ -113,12 +113,12 @@ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 1. Connect your GitHub repository to Railway
 2. Set environment variables in the dashboard
-3. Deploy automatically from main branch
+3. Deploy automatically from the main branch
 
 ### Docker Deployment
 
 ```bash
-docker build -t forge-service .
+docker build -t forge-service.
 docker run -p 8000:8000 -e HF_TOKEN=your_token forge-service
 ```
 
@@ -134,10 +134,10 @@ AI art workflows are fragmented across dozens of tools and platforms. Prompts, c
 
 ### The Solution: Prompt Packages
 
-**Prompt Packages are synchronized, structured blueprints** that eliminate fragmentation. Each package:
+**Prompt Packages are synchronised, structured blueprints** that eliminate fragmentation. Each package:
 
 - **Ties directly** to exact ComfyUI workflows (text-to-image, text-to-video, image-to-video)
-- **Optimizes every parameter** - checkpoints, samplers, schedulers, resolutions, LoRAs, seeds
+- **Optimises every parameter** - checkpoints, samplers, schedulers, resolutions, LoRAs, seeds
 - **Is versioned and documented** for quality, speed, and fidelity
 - **Records what changed** and why it changed
 - **Remains auditable, reusable, and scalable**
