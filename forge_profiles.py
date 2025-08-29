@@ -1,4 +1,3 @@
-```python
 # forge_profiles.py
 import json
 import os
@@ -260,4 +259,3 @@ create_profile("new_user", {
 # Get statistics
 stats = get_profile_stats()
 print(f"Total profiles: {stats['total_profiles']}")
-```
