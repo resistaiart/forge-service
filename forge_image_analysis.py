@@ -1,13 +1,3 @@
-result = await run_in_threadpool(analyse_image, str(request.image_url), None, request.mode)
-```
-
-But your current `analyse_image` function:
-1. Only takes 2 parameters (`image_input` and `mode`) - the `None` being passed might cause issues
-2. Returns the full envelope, but `main.py` might be expecting just the result part
-
-Let me suggest a revised version that ensures compatibility:
-
-```python
 # forge_image_analysis.py
 import requests
 import time
@@ -35,7 +25,7 @@ def query_hf(model_id: str, payload: dict) -> Any:
         try:
             response = requests.post(url, headers=HEADERS, json=payload, timeout=120)
             result = response.json()
-
+            
             # Handle model loading errors
             if isinstance(result, dict) and "error" in result:
                 error_msg = result["error"].lower()
@@ -46,7 +36,7 @@ def query_hf(model_id: str, payload: dict) -> Any:
                     continue
                 # Other errors should raise exception
                 raise Exception(f"Hugging Face API error: {result['error']}")
-
+            
             return result
 
         except requests.exceptions.RequestException as e:
@@ -70,48 +60,52 @@ def analyse_image(image_input: Union[str, bytes], caption: Optional[str] = None,
         mode: 'basic' or 'detailed'
     
     Returns:
-        Dictionary with analysis results (compatible with main.py expectation)
+        Dictionary with analysis results
     """
-    if mode not in MODELS:
-        raise ValueError(f"Invalid mode '{mode}'. Use 'basic' or 'detailed'.")
+    try:
+        if mode not in MODELS:
+            raise ValueError(f"Invalid mode '{mode}'. Use 'basic' or 'detailed'.")
 
-    model_id = MODELS[mode]
+        model_id = MODELS[mode]
 
-    # Handle different input types
-    if isinstance(image_input, bytes):
-        encoded_image = base64.b64encode(image_input).decode('utf-8')
-        image_data = encoded_image
-    else:
-        image_data = image_input
+        # Handle different input types
+        if isinstance(image_input, bytes):
+            encoded_image = base64.b64encode(image_input).decode('utf-8')
+            image_data = encoded_image
+        else:
+            image_data = image_input
 
-    # Prepare payload based on mode
-    if mode == "basic":
-        payload = {"inputs": image_data}
-    else:
-        # Use caption if provided for more context-aware analysis
-        question = "Describe this image in extreme detail"
-        if caption:
-            question = f"{question}. Context: {caption}"
-        payload = {"inputs": {"image": image_data, "question": question}}
+        # Prepare payload based on mode
+        if mode == "basic":
+            payload = {"inputs": image_data}
+        else:
+            # Use caption if provided for more context-aware analysis
+            question = "Describe this image in extreme detail"
+            if caption:
+                question = f"{question}. Context: {caption}"
+            payload = {"inputs": {"image": image_data, "question": question}}
 
-    # Query API
-    result = query_hf(model_id, payload)
+        # Query API
+        result = query_hf(model_id, payload)
 
-    # Process response
-    description = ""
-    if isinstance(result, list) and len(result) > 0:
-        if "generated_text" in result[0]:
-            description = result[0]["generated_text"].strip()
-    elif isinstance(result, dict) and "generated_text" in result:
-        description = result["generated_text"].strip()
-    else:
-        raise Exception(f"Unexpected response format from {model_id}: {result}")
+        # Process response
+        description = ""
+        if isinstance(result, list) and len(result) > 0:
+            if "generated_text" in result[0]:
+                description = result[0]["generated_text"].strip()
+        elif isinstance(result, dict) and "generated_text" in result:
+            description = result["generated_text"].strip()
+        else:
+            raise Exception(f"Unexpected response format from {model_id}: {result}")
 
-    return {
-        "mode": mode,
-        "description": description,
-        "model_used": model_id
-    }
+        return {
+            "mode": mode,
+            "description": description,
+            "model_used": model_id
+        }
+        
+    except Exception as e:
+        raise Exception(f"Image analysis failed: {str(e)}")
 
 # Optional: Helper function for the envelope format if needed elsewhere
 def analyse_image_with_envelope(image_input: Union[str, bytes], mode: str = "basic") -> Dict[str, Any]:
@@ -131,3 +125,20 @@ def analyse_image_with_envelope(image_input: Union[str, bytes], mode: str = "bas
             "result": None,
             "message": f"Image analysis failed: {str(e)}"
         }
+
+# Example usage
+if __name__ == "__main__":
+    # Test with a public image URL
+    test_url = "https://huggingface.co/datasets/hf-internal-testing/example-images/resolve/main/cat.png"
+    
+    try:
+        print("Testing basic analysis...")
+        result_basic = analyse_image(test_url, mode="basic")
+        print(f"Basic result: {result_basic['description']}")
+        
+        print("\nTesting detailed analysis...")
+        result_detailed = analyse_image(test_url, mode="detailed")
+        print(f"Detailed result: {result_detailed['description']")
+        
+    except Exception as e:
+        print(f"Error: {e}")
