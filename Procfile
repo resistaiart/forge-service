@@ -1,10 +1,1 @@
-{
-  "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "nixpacks",
-    "buildCommand": "pip install -r requirements.txt"
-  },
-  "deploy": {
-    "startCommand": "uvicorn main:app --host=0.0.0.0 --port=$PORT --timeout-keep-alive 120"
-  }
-}
+web: uvicorn main:app --host=0.0.0.0 --port=$PORT --timeout-keep-alive 120$
