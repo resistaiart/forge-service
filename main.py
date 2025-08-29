@@ -1,16 +1,19 @@
+
+```python
 # main.py
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field, HttpUrl
-from typing import Optional, List, Dict, Any, Literal
+from typing import Optional, List, Dict, Any, Literal, Union
 import uvicorn
 import logging
 import os
 
 from forge_prompts import optimise_prompt_package
 from forge_image_analysis import analyse_image
+from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise_i2v_package  # NEW imports
 
 # =====================
 # SETTINGS
@@ -55,6 +58,32 @@ class AnalyseRequest(BaseModel):
     image_url: HttpUrl = Field(..., description="The URL of the image to analyse")
     mode: Literal["basic", "detailed"] = Field("basic", description="Analysis mode")
 
+# NEW: Request models for specialist endpoints
+class I2IRequest(BaseModel):
+    prompt: str = Field(..., description="Transformation guidance prompt")
+    input_image: str = Field(..., description="Base64 encoded image or image URL")
+    denoise_strength: float = Field(0.75, ge=0.0, le=1.0, description="How much to alter the image (0.0-1.0)")
+    resources: Optional[List[str]] = Field(default_factory=list, description="Optional resources/LoRAs")
+    caption: Optional[str] = Field("", description="Description of input image")
+
+class T2VRequest(BaseModel):
+    prompt: str = Field(..., description="Video description prompt")
+    num_frames: int = Field(25, ge=14, le=100, description="Number of frames (14-100)")
+    fps: int = Field(6, ge=1, le=30, description="Frames per second (1-30)")
+    motion_intensity: Literal["low", "medium", "high"] = Field("medium", description="Motion level")
+    resources: Optional[List[str]] = Field(default_factory=list, description="Optional resources")
+    caption: Optional[str] = Field("", description="Additional context")
+
+class I2VRequest(BaseModel):
+    prompt: str = Field(..., description="Animation guidance prompt")
+    input_image: str = Field(..., description="Base64 encoded image or image URL")
+    num_frames: int = Field(25, ge=14, le=100, description="Number of frames (14-100)")
+    fps: int = Field(6, ge=1, le=30, description="Frames per second (1-30)")
+    motion_intensity: Literal["low", "medium", "high"] = Field("medium", description="Motion level")
+    denoise_strength: float = Field(0.5, ge=0.0, le=1.0, description="Transformation strength (0.0-1.0)")
+    resources: Optional[List[str]] = Field(default_factory=list, description="Optional resources")
+    caption: Optional[str] = Field("", description="Description of input image")
+
 class StandardResponse(BaseModel):
     outcome: Literal["success", "error"]
     result: Optional[dict] = None
@@ -79,7 +108,7 @@ async def optimise(request: OptimiseRequest):
             request.resources,
             request.caption,
             request.custom_weights,
-            request.checkpoint  # NEW: pass checkpoint through
+            request.checkpoint
         )
         return {"outcome": "success", "result": result}
 
@@ -94,12 +123,77 @@ async def analyse(request: AnalyseRequest):
     Analyse an image in [basic] or [detailed] mode.
     """
     try:
-        result = await run_in_threadpool(analyse_image, request.image_url, None, request.mode)
+        result = await run_in_threadpool(analyse_image, str(request.image_url), None, request.mode)
         return {"outcome": "success", "result": result}
 
     except Exception as e:
         logger.error(f"analyse failed: {str(e)}", exc_info=True)
         return {"outcome": "error", "message": f"analyse failed: {str(e)}"}
+
+# NEW: Specialist endpoints
+@app.post("/optimise/i2i", response_model=StandardResponse)
+async def optimise_i2i(request: I2IRequest):
+    """
+    Optimise package for Image-to-Image transformation.
+    """
+    try:
+        result = await run_in_threadpool(
+            optimise_i2i_package,
+            request.prompt,
+            request.input_image,
+            request.denoise_strength,
+            request.resources,
+            request.caption
+        )
+        return {"outcome": "success", "result": result}
+
+    except Exception as e:
+        logger.error(f"i2i optimisation failed: {str(e)}", exc_info=True)
+        return {"outcome": "error", "message": f"i2i optimisation failed: {str(e)}"}
+
+@app.post("/optimise/t2v", response_model=StandardResponse)
+async def optimise_t2v(request: T2VRequest):
+    """
+    Optimise package for Text-to-Video generation.
+    """
+    try:
+        result = await run_in_threadpool(
+            optimise_t2v_package,
+            request.prompt,
+            request.num_frames,
+            request.fps,
+            request.motion_intensity,
+            request.resources,
+            request.caption
+        )
+        return {"outcome": "success", "result": result}
+
+    except Exception as e:
+        logger.error(f"t2v optimisation failed: {str(e)}", exc_info=True)
+        return {"outcome": "error", "message": f"t2v optimisation failed: {str(e)}"}
+
+@app.post("/optimise/i2v", response_model=StandardResponse)
+async def optimise_i2v(request: I2VRequest):
+    """
+    Optimise package for Image-to-Video animation.
+    """
+    try:
+        result = await run_in_threadpool(
+            optimise_i2v_package,
+            request.prompt,
+            request.input_image,
+            request.num_frames,
+            request.fps,
+            request.motion_intensity,
+            request.denoise_strength,
+            request.resources,
+            request.caption
+        )
+        return {"outcome": "success", "result": result}
+
+    except Exception as e:
+        logger.error(f"i2v optimisation failed: {str(e)}", exc_info=True)
+        return {"outcome": "error", "message": f"i2v optimisation failed: {str(e)}"}
 
 @app.get("/health", response_model=StandardResponse)
 async def health():
@@ -124,3 +218,4 @@ async def global_exception_handler(request: Request, exc: Exception):
 # =====================
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")), reload=settings.debug)
+```
