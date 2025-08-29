@@ -1,4 +1,3 @@
-```python
 # forge_resources.py
 import re
 import logging
@@ -272,4 +271,3 @@ if __name__ == "__main__":
     models_only = filter_resources(result, type="model")
     for item in models_only:
         print(f"  {item}")
-```
