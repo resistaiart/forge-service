@@ -1,4 +1,3 @@
-```python
 # forge_workflows.py
 import random
 import re
@@ -304,11 +303,8 @@ def _generate_diagnostics(settings: Dict[str, Any], intent: Dict[str, str], goal
         "cfg_reason": f"CFG {settings['cfg_scale']} for {intent['style']} style",
         "goal": goal
     }
-```
 
 ## Usage Examples
-
-```python
 # Image-to-Image example
 i2i_package = optimise_i2i_package(
     prompt="transform into cyberpunk style with neon lights",
@@ -334,4 +330,3 @@ i2v_package = optimise_i2v_package(
     motion_intensity="low",
     denoise_strength=0.4
 )
-```
