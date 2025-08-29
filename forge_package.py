@@ -1,4 +1,3 @@
-```python
 # forge_package.py
 import time
 import logging
@@ -151,4 +150,3 @@ def _enrich_prompt_with_descriptors(base_prompt: str, descriptors: Optional[Dict
     else:
         logger.debug("No new descriptors added to prompt")
         return base_prompt
-```
