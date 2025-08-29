@@ -1,6 +1,4 @@
 ### Enhanced `forge_diagnostics.py`
-
-```python
 # forge_diagnostics.py
 from typing import Dict, List, Any
 from enum import Enum
@@ -305,4 +303,3 @@ if __name__ == "__main__":
     print("\n=== Recommendations ===")
     for rec in detailed_diag["recommendations"]:
         print(f"- {rec}")
-```
