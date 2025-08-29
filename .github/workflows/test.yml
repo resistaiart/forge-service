@@ -1,0 +1,70 @@
+name: Forge API Smoke Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      forge:
+        build: .
+        ports:
+          - 8000:8000
+        options: >-
+          --health-cmd="curl --fail http://localhost:8000/health || exit 1"
+          --health-interval=10s
+          --health-retries=5
+          --health-timeout=5s
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Wait for Forge API to be healthy
+      run: |
+        for i in {1..10}; do
+          if curl -s http://localhost:8000/health | grep -q "success"; then
+            echo "Forge API is healthy"
+            exit 0
+          fi
+          echo "Waiting for Forge API..."
+          sleep 5
+        done
+        echo "Forge API did not start in time"
+        exit 1
+
+    - name: Test /health endpoint
+      run: |
+        curl -s http://localhost:8000/health | grep -q "success"
+
+    - name: Test /version endpoint
+      run: |
+        curl -s http://localhost:8000/version | grep -q "Forge API"
+
+    - name: Test /v2/optimise (basic t2i)
+      run: |
+        curl -s -X POST http://localhost:8000/v2/optimise \
+          -H "Content-Type: application/json" \
+          -d '{"package_goal":"t2i","prompt":"test prompt"}' | grep -q "result"
+
+    - name: Test /v2/analyse (basic mode)
+      run: |
+        curl -s -X POST http://localhost:8000/v2/analyse \
+          -H "Content-Type: application/json" \
+          -d '{"image_url":"https://huggingface.co/datasets/hf-internal-testing/example-images/resolve/main/cat.png","mode":"basic"}' \
+          | grep -q "result"
