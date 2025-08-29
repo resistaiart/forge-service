@@ -1,6 +1,6 @@
 # main.py
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
@@ -17,7 +17,6 @@ from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise
 # Import new sealed workshop orchestration
 from forge_optimizer import optimize_sealed
 from forge_public_interface import PackageGoal
-from forge_settings import get_defaults, infer_goal_from_prompt
 
 # =====================
 # SETTINGS
@@ -51,7 +50,7 @@ logger = logging.getLogger(__name__)
 # REQUEST/RESPONSE MODELS
 # =====================
 class OptimiseRequest(BaseModel):
-    package_goal: Literal["t2i", "t2v", "i2i", "i2v"] = Field(..., description="Generation goal")
+    package_goal: PackageGoal
     prompt: str = Field(..., description="The input prompt")
     resources: Optional[List[dict]] = Field(default_factory=list, description="Optional resource list")
     caption: Optional[str] = Field("", description="Optional caption")
@@ -71,26 +70,10 @@ class StandardResponse(BaseModel):
 # =====================
 @app.post("/v2/optimise", response_model=StandardResponse)
 async def optimise_v2(request: OptimiseRequest):
-    """
-    🔒 SEALED WORKSHOP - New optimized endpoint
-    Uses the sealed workshop pattern - no internal reasoning exposed
-    """
     try:
         logger.info(f"Sealed workshop request: {request.package_goal}")
         request_dict = request.dict()
         result = await run_in_threadpool(optimize_sealed, request_dict)
-
-        # Enrich response with menus and display metadata
-        result["menus"] = ["variants", "prompt", "config", "workflow", "help"]
-        result["display"] = {
-            "title": request.prompt[:60] + "...",
-            "subtitle": f"Goal: {request.package_goal.upper()}",
-            "notes": [
-                "CFG, steps, and seed fixed for reproducibility",
-                "ComfyUI workflow patch included"
-            ]
-        }
-
         return {"outcome": "success", "result": result}
     except ValueError as e:
         if "Content violation" in str(e):
@@ -169,31 +152,6 @@ async def analyse(request: AnalyseRequest):
         return {"outcome": "error", "message": f"Image analysis failed: {str(e)}"}
 
 # =====================
-# NEW INTAKE/DEFAULT ENDPOINTS
-# =====================
-@app.get("/defaults", response_model=StandardResponse)
-def get_defaults_route():
-    try:
-        data = get_defaults()
-        return {"outcome": "success", "result": data}
-    except Exception as e:
-        logger.error(f"Failed to get defaults: {e}")
-        return {"outcome": "error", "message": str(e)}
-
-@app.post("/intake/validate", response_model=StandardResponse)
-async def intake_validate_route(request: Request):
-    try:
-        payload = await request.json()
-        prompt = payload.get("prompt", "")
-        if not prompt:
-            raise ValueError("Missing prompt")
-        result = infer_goal_from_prompt(prompt)
-        return {"outcome": "success", "result": result}
-    except Exception as e:
-        logger.error(f"Goal inference failed: {e}")
-        return {"outcome": "error", "message": f"Goal inference failed: {str(e)}"}
-
-# =====================
 # HEALTH & UTILITY ENDPOINTS
 # =====================
 @app.get("/health", response_model=StandardResponse)
@@ -209,9 +167,15 @@ async def version():
             "legacy": "/optimise, /t2i, /t2v, /optimise/i2i, /optimise/t2v",
             "sealed_workshop": "/v2/optimise",
             "analysis": "/analyse",
-            "health": "/health"
+            "health": "/health",
+            "manifest": "/manifest"
         }
     }
+
+@app.get("/manifest", response_class=FileResponse)
+async def serve_manifest():
+    """Serve the full Forge manifest as raw JSON"""
+    return FileResponse("forge_manifest.json", media_type="application/json")
 
 # =====================
 # ERROR FALLBACK
