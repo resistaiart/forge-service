@@ -1,7 +1,7 @@
 # forge_comfy_patches.py
 # 🔒 PRIVATE IMPLEMENTATION - Generates ComfyUI JSON patches
 # Does NOT conflict with forge_workflows.py
-
+from typing import Any, Dict
 def generate_workflow_patch(settings: Dict[str, Any]) -> Dict[str, Any]:
     """
     🔒 SEALED: Generates minimal ComfyUI workflow patches based on settings.
