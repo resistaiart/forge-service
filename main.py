@@ -16,7 +16,6 @@ from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise
 
 # Import new sealed workshop orchestration
 from forge_optimizer import optimize_sealed
-from forge_public_interface import PackageGoal
 
 # =====================
 # SETTINGS
