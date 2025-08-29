@@ -25,7 +25,8 @@ def optimize_sealed(request: dict) -> dict:
     positive, negative = build_prompts(cleaned_prompt, intent)
     
     # 4. Use your existing settings system
-    base_settings = build_settings(request['package_goal'], intent)
+    profile = request.get("profile")  # may be None
+    base_settings = build_settings(profile, request['package_goal'])
     
     # 5. Use your existing resource validation
     resources = validate_resources(request.get('resources', []))
