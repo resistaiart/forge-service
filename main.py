@@ -1,8 +1,8 @@
 # main.py
 import os
 import logging
-import requests   # ✅ needed for Hugging Face + CivitAI lookups
-from fastapi import FastAPI, Request, HTTPException, Query  # ✅ added Query
+import requests
+from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
@@ -17,7 +17,7 @@ from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise
 from forge_optimizer import optimize_sealed
 
 # =====================
-# SETTINGS (moved up so `settings` exists before app init)
+# SETTINGS
 # =====================
 class Settings(BaseModel):
     app_name: str = "Forge Service API"
@@ -29,7 +29,7 @@ settings = Settings()
 # =====================
 # APP INIT
 # =====================
-app = FastAPI(title=settings.app_name, version="2.0")  # safe now
+app = FastAPI(title=settings.app_name, version="2.0")
 
 # CORS middleware
 app.add_middleware(
@@ -52,14 +52,28 @@ def search_hf_models(query="stable-diffusion", limit=5):
     resp = requests.get(url, timeout=10)
     resp.raise_for_status()
     models = resp.json()
-    return [{"name": m.get("modelId"), "source": "HuggingFace"} for m in models[:limit]]
+    return [
+        {
+            "name": m.get("modelId"),
+            "source": "HuggingFace",
+            "url": f"https://huggingface.co/{m.get('modelId')}"
+        }
+        for m in models[:limit]
+    ]
 
 def search_civitai_models(limit=5):
     url = f"https://civitai.com/api/v1/models?types=Checkpoint&limit={limit}"
     resp = requests.get(url, timeout=10)
     resp.raise_for_status()
     models = resp.json().get("items", [])
-    return [{"name": m.get("name"), "source": "CivitAI"} for m in models]
+    return [
+        {
+            "name": m.get("name"),
+            "source": "CivitAI",
+            "url": f"https://civitai.com/models/{m.get('id')}"
+        }
+        for m in models
+    ]
 
 # =====================
 # NEW ROUTE: CHECKPOINT LOOKUP
@@ -107,15 +121,9 @@ async def optimise_v2(request: OptimiseRequest):
     """
     try:
         logger.info(f"Sealed workshop request: {request.package_goal}")
-        
-        # Convert Pydantic model to dict for the sealed optimizer
         request_dict = request.dict()
-        
-        # Process through sealed workshop
         result = await run_in_threadpool(optimize_sealed, request_dict)
-        
         return {"outcome": "success", "result": result}
-
     except ValueError as e:
         if "Content violation" in str(e):
             return JSONResponse(
@@ -124,13 +132,12 @@ async def optimise_v2(request: OptimiseRequest):
             )
         logger.error(f"Validation error in sealed workshop: {e}")
         return {"outcome": "error", "message": f"Validation error: {str(e)}"}
-        
     except Exception as e:
         logger.error(f"Sealed workshop error: {e}")
         return {"outcome": "error", "message": f"Internal optimization error: {str(e)}"}
 
 # =====================
-# ROUTES - LEGACY ENDPOINTS (Keep for backward compatibility)
+# ROUTES - LEGACY ENDPOINTS (LOCKED PACKAGE OUTPUT)
 # =====================
 @app.post("/optimise", response_model=StandardResponse)
 @app.post("/t2i", response_model=StandardResponse)
@@ -138,12 +145,13 @@ async def optimise_v2(request: OptimiseRequest):
 async def optimise_legacy(request: OptimiseRequest):
     """
     Legacy optimization endpoint - maintained for backward compatibility
-    Now also returns checkpoint suggestions.
+    Returns locked package format with checkpoint links.
     """
     try:
         logger.info(f"Legacy optimization request: {request.package_goal}")
         
-        result = await run_in_threadpool(
+        # get raw optimisation
+        raw = await run_in_threadpool(
             optimise_prompt_package,
             request.prompt,
             request.package_goal,
@@ -152,10 +160,24 @@ async def optimise_legacy(request: OptimiseRequest):
             request.custom_weights
         )
 
-        # ✅ add checkpoint suggestions here
-        checkpoints = search_hf_models(request.package_goal, 3) + search_civitai_models(3)
+        # checkpoint suggestions
+        checkpoints = search_hf_models(request.prompt, 3) + search_civitai_models(3)
 
-        return {"outcome": "success", "result": result, "checkpoints": checkpoints}
+        # format into locked text package
+        package_text = (
+            f"**Positive Prompt:**\n```\n{raw.get('positive','')}\n```\n\n"
+            f"**Negative Prompt:**\n```\n{raw.get('negative','')}\n```\n\n"
+            f"**Config ⚙️**\n"
+            f"- sampler: {raw.get('config',{}).get('sampler','')}\n"
+            f"- steps: {raw.get('config',{}).get('steps','')}\n"
+            f"- cfg: {raw.get('config',{}).get('cfg','')}\n"
+            f"- resolution: {raw.get('config',{}).get('resolution','')}\n"
+            f"- seed: {raw.get('config',{}).get('seed','')}\n\n"
+            f"**Checkpoint 🗂️**\n" +
+            "\n".join([f"- [{c['name']} ({c['source']})]({c['url']})" for c in checkpoints])
+        )
+
+        return {"outcome": "success", "result": {"package": package_text}}
 
     except Exception as e:
         logger.error(f"Legacy optimization failed: {e}")
@@ -163,9 +185,6 @@ async def optimise_legacy(request: OptimiseRequest):
 
 @app.post("/optimise/i2i", response_model=StandardResponse)
 async def optimise_i2i_legacy(request: Request):
-    """
-    Legacy I2I endpoint - maintained for backward compatibility
-    """
     try:
         payload = await request.json()
         result = await run_in_threadpool(
@@ -183,9 +202,6 @@ async def optimise_i2i_legacy(request: Request):
 
 @app.post("/optimise/t2v", response_model=StandardResponse)
 async def optimise_t2v_legacy(request: Request):
-    """
-    Legacy T2V endpoint - maintained for backward compatibility
-    """
     try:
         payload = await request.json()
         result = await run_in_threadpool(
@@ -205,9 +221,6 @@ async def optimise_t2v_legacy(request: Request):
 @app.post("/analyse_image", response_model=StandardResponse)
 @app.post("/analyse", response_model=StandardResponse)
 async def analyse(request: AnalyseRequest):
-    """
-    Image analysis endpoint (unchanged)
-    """
     try:
         result = await run_in_threadpool(analyse_image, request.image_url, None, request.mode)
         return {"outcome": "success", "result": result}
@@ -220,12 +233,10 @@ async def analyse(request: AnalyseRequest):
 # =====================
 @app.get("/health", response_model=StandardResponse)
 async def health():
-    """Health check endpoint"""
     return {"outcome": "success", "message": "healthy"}
 
 @app.get("/version")
 async def version():
-    """API version information"""
     return {
         "version": "2.0",
         "service": "The Forge API",
