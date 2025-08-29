@@ -39,7 +39,7 @@ Simply say: **"Fire up the forge"** to start creating optimised prompt packages 
 
 ## ✨ What Does The Forge Do?
 
-The Forge takes your creative ideas and turns them into engineered specifications that AI systems understand perfectly:
+The Forge GPT takes your creative ideas and turns them into engineered specifications that Comfyui understand perfectly:
 
 - **🎯 Prompt Optimisation**: Transforms basic prompts into highly detailed, weighted instructions
 - **🖼️ Image Analysis**: Provides detailed descriptions and captions for any image
