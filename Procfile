@@ -1,2 +1,3 @@
-web: gunicorn -w 4 -b 0.0.0.0:$PORT main:app
-
+```bash
+web: uvicorn main:app --host=0.0.0.0 --port=$PORT --timeout-keep-alive 120
+```
