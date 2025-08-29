@@ -11,8 +11,12 @@ from forge_profiles import load_profile, adapt_settings, adapt_captions
 
 def optimize_sealed(request: dict) -> dict:
     """🔒 SEALED: Orchestrates your existing modules behind the scenes"""
-    # 1. Safety first (using your existing safety module)
-    cleaned_prompt = safety_scrub(request['prompt'])
+    # 1. Safety first (using profile NSFW setting if provided)
+    allow_nsfw = False
+    if "profile" in request and isinstance(request["profile"], dict):
+        allow_nsfw = request["profile"].get("content_preferences", {}).get("allow_nsfw", False)
+
+    cleaned_prompt = safety_scrub(request['prompt'], allow_nsfw=allow_nsfw)
     
     # 2. Use your existing prompt analysis
     intent = analyze_prompt_style(cleaned_prompt)
