@@ -3,10 +3,15 @@ import requests
 import time
 import os
 import base64
+import logging
 from typing import Union, Dict, Any, Optional
 
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Configuration
 HF_TOKEN = os.getenv("HF_TOKEN")
-HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
+HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"} if HF_TOKEN else {}
 
 MODELS = {
     "basic": "nlpconnect/vit-gpt2-image-captioning",
@@ -20,10 +25,15 @@ def query_hf(model_id: str, payload: dict) -> Any:
     """
     Send request to Hugging Face model with retry logic for cold starts.
     """
+    if not HF_TOKEN:
+        raise Exception("Hugging Face token not configured. Set HF_TOKEN environment variable.")
+    
     url = f"https://api-inference.huggingface.co/models/{model_id}"
+    
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             response = requests.post(url, headers=HEADERS, json=payload, timeout=120)
+            response.raise_for_status()
             result = response.json()
             
             # Handle model loading errors
@@ -31,7 +41,7 @@ def query_hf(model_id: str, payload: dict) -> Any:
                 error_msg = result["error"].lower()
                 if "loading" in error_msg or "not found" in error_msg:
                     wait = result.get("estimated_time", DEFAULT_RETRY_DELAY)
-                    print(f"[Forge] {model_id} loading, retrying in {wait}s (attempt {attempt}/{MAX_RETRIES})")
+                    logger.info(f"{model_id} loading, retrying in {wait}s (attempt {attempt}/{MAX_RETRIES})")
                     time.sleep(wait)
                     continue
                 # Other errors should raise exception
@@ -40,10 +50,12 @@ def query_hf(model_id: str, payload: dict) -> Any:
             return result
 
         except requests.exceptions.RequestException as e:
+            logger.warning(f"Request failed (attempt {attempt}/{MAX_RETRIES}): {e}")
             if attempt == MAX_RETRIES:
                 raise Exception(f"Request failed after {MAX_RETRIES} attempts: {str(e)}")
             time.sleep(DEFAULT_RETRY_DELAY)
         except Exception as e:
+            logger.error(f"Unexpected error (attempt {attempt}/{MAX_RETRIES}): {e}")
             if attempt == MAX_RETRIES:
                 raise
             time.sleep(DEFAULT_RETRY_DELAY)
@@ -56,7 +68,7 @@ def analyse_image(image_input: Union[str, bytes], caption: Optional[str] = None,
     
     Args:
         image_input: URL string or image bytes
-        caption: Optional caption (currently unused, for future compatibility)
+        caption: Optional caption for context
         mode: 'basic' or 'detailed'
     
     Returns:
@@ -79,10 +91,9 @@ def analyse_image(image_input: Union[str, bytes], caption: Optional[str] = None,
         if mode == "basic":
             payload = {"inputs": image_data}
         else:
-            # Use caption if provided for more context-aware analysis
-            question = "Describe this image in extreme detail"
+            question = "Describe this image in extreme detail. Include objects, colors, composition, style, mood, and any text visible."
             if caption:
-                question = f"{question}. Context: {caption}"
+                question = f"{question} Context: {caption}"
             payload = {"inputs": {"image": image_data, "question": question}}
 
         # Query API
@@ -105,9 +116,10 @@ def analyse_image(image_input: Union[str, bytes], caption: Optional[str] = None,
         }
         
     except Exception as e:
+        logger.error(f"Image analysis failed: {e}")
         raise Exception(f"Image analysis failed: {str(e)}")
 
-# Optional: Helper function for the envelope format if needed elsewhere
+# Helper function for standard response format
 def analyse_image_with_envelope(image_input: Union[str, bytes], mode: str = "basic") -> Dict[str, Any]:
     """
     Wrapper that returns Forge-standard envelope format.
@@ -126,8 +138,11 @@ def analyse_image_with_envelope(image_input: Union[str, bytes], mode: str = "bas
             "message": f"Image analysis failed: {str(e)}"
         }
 
-# Example usage
+# Example usage and testing
 if __name__ == "__main__":
+    # Configure logging for testing
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    
     # Test with a public image URL
     test_url = "https://huggingface.co/datasets/hf-internal-testing/example-images/resolve/main/cat.png"
     
@@ -138,7 +153,7 @@ if __name__ == "__main__":
         
         print("\nTesting detailed analysis...")
         result_detailed = analyse_image(test_url, mode="detailed")
-        print(f"Detailed result: {result_detailed['description']")
+        print(f"Detailed result: {result_detailed['description']}")
         
     except Exception as e:
         print(f"Error: {e}")
