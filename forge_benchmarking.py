@@ -1,6 +1,4 @@
 ### Enhanced `forge_benchmarking.py`
-
-```python
 # forge_benchmarking.py
 import time
 import random
@@ -231,4 +229,3 @@ if __name__ == "__main__":
     print(f"Overall Score: {comprehensive_result['overall_score']}")
     print(f"Performance: {comprehensive_result['performance_assessment']['level']}")
     print(f"Recommendation: {comprehensive_result['performance_assessment']['recommendation']}")
-```
