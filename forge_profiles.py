@@ -224,36 +224,3 @@ def delete_profile(user_id: str) -> bool:
     except Exception as e:
         logger.error(f"Failed to delete profile for '{user_id}': {e}")
         return False
-        
-### Key Enhancements:
-
-1. **Persistence**: Added file-based storage for profiles
-2. **Enums**: Used enums for better type safety and documentation
-3. **Rich Default Profile**: Expanded with more configuration options
-4. **Style-Specific Adjustments**: Profiles can have different settings for different art styles
-5. **Metadata Tracking**: Tracks creation, modification times, and usage counts
-6. **Bounds Checking**: Ensures settings stay within reasonable limits
-7. **Comprehensive API**: Added functions for creating, listing, and deleting profiles
-8. **Error Handling**: Proper error handling and logging throughout
-9. **Content Preferences**: Added NSFW filtering and aspect ratio preferences
-
-### Usage Examples:
-
-# Load a profile
-profile = load_profile("user123")
-
-# Update specific settings
-update_profile("user123", {
-    "verbosity": "verbose",
-    "preferred_checkpoint": "realistic-vision-v5.safetensors"
-})
-
-# Create a new profile
-create_profile("new_user", {
-    "verbosity": "compact",
-    "caption_style": "technical"
-})
-
-# Get statistics
-stats = get_profile_stats()
-print(f"Total profiles: {stats['total_profiles']}")
