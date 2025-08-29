@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Forge API Contract",
+  "description": "Schema definitions for Forge Prompt Package system",
+  "type": "object",
+  "properties": {
+    "OptimiseRequest": {
+      "type": "object",
+      "required": ["package_goal", "prompt"],
+      "properties": {
+        "package_goal": {
+          "type": "string",
+          "enum": ["t2i", "i2i", "t2v", "i2v"],
+          "description": "The generation goal"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "User input prompt"
+        },
+        "resources": {
+          "type": "array",
+          "description": "Optional resource list (LoRAs, embeddings, etc.)",
+          "items": { "type": "object" }
+        },
+        "caption": {
+          "type": "string",
+          "description": "Optional caption for context"
+        },
+        "custom_weights": {
+          "type": "object",
+          "additionalProperties": { "type": "number" },
+          "description": "Optional keyword weighting overrides"
+        }
+      }
+    },
+    "StandardResponse": {
+      "type": "object",
+      "required": ["outcome"],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": ["success", "error"]
+        },
+        "result": {
+          "type": "object",
+          "description": "Returned Forge Prompt Package or analysis results"
+        },
+        "message": {
+          "type": "string",
+          "description": "Status or error message"
+        }
+      }
+    },
+    "ForgePromptPackage": {
+      "type": "object",
+      "required": ["package_version", "positive", "negative", "config", "workflow_patch", "safety", "menus", "package_goal"],
+      "properties": {
+        "package_version": { "type": "string" },
+        "positive": { "type": "string" },
+        "negative": { "type": "string" },
+        "config": {
+          "type": "object",
+          "properties": {
+            "sampler": { "type": "string" },
+            "steps": { "type": "integer" },
+            "cfg": { "type": "number" },
+            "resolution": { "type": "string" },
+            "seed": { "type": "integer" }
+          }
+        },
+        "workflow_patch": {
+          "type": "object",
+          "properties": {
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "op": { "type": "string" },
+                  "node": { "type": "string" },
+                  "params": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "safety": {
+          "type": "object",
+          "properties": {
+            "nsfw": { "type": "string" },
+            "resources": { "type": "object" }
+          }
+        },
+        "menus": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "package_goal": {
+          "type": "string",
+          "enum": ["t2i", "i2i", "t2v", "i2v"]
+        }
+      }
+    }
+  }
+}
