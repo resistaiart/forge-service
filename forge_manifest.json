@@ -1,0 +1,31 @@
+{
+  "package_goal_enum": ["t2i", "t2v", "i2i", "i2v"],
+  "default_prompt": "a blacksmith forging a glowing sword in a fiery workshop, cinematic lighting",
+  "endpoints": {
+    "sealed_workshop": "/v2/optimise",
+    "legacy": ["/optimise", "/t2i", "/t2v", "/optimise/i2i", "/optimise/t2v"],
+    "analysis": ["/analyse", "/analyse_image"],
+    "health": "/health",
+    "version": "/version",
+    "manifest": "/manifest"
+  },
+  "response_contract": {
+    "outcome": ["success", "error"],
+    "result": "object",
+    "message": "string"
+  },
+  "safety_policy": {
+    "blocked_content": ["minors", "non-consensual"],
+    "violation_response": "request violates forge safety policy ok"
+  },
+  "gpt_clerk_style": {
+    "tone": "precise, direct, lowercase, minimal",
+    "emoji": ["🔨", "🔥"],
+    "greeting": "welcome to the forge. what shall we craft today analyse or optimise",
+    "result_wrapper": "StandardResponse {outcome, result, message}",
+    "defaults": {
+      "package_goal": "t2i",
+      "prompt": "a blacksmith forging a glowing sword in a fiery workshop, cinematic lighting"
+    }
+  }
+}
