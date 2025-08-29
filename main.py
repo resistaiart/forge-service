@@ -1,7 +1,7 @@
 # main.py
 import os
 import logging
-import requests   # ✅ added for Hugging Face + CivitAI lookups
+import requests   # ✅ needed for Hugging Face + CivitAI lookups
 from fastapi import FastAPI, Request, HTTPException, Query  # ✅ added Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +17,7 @@ from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise
 from forge_optimizer import optimize_sealed
 
 # =====================
-# SETTINGS (moved above app init)
+# SETTINGS (moved up so `settings` exists before app init)
 # =====================
 class Settings(BaseModel):
     app_name: str = "Forge Service API"
@@ -76,16 +76,6 @@ async def list_checkpoints(q: str = Query("stable-diffusion"), limit: int = Quer
     except Exception as e:
         logger.error(f"Checkpoint lookup failed: {e}")
         return {"outcome": "error", "message": str(e)}
-
-# =====================
-# SETTINGS
-# =====================
-class Settings(BaseModel):
-    app_name: str = "Forge Service API"
-    cors_origins: str = os.getenv("CORS_ORIGINS", "*")
-    debug: bool = os.getenv("DEBUG", "False").lower() == "true"
-
-settings = Settings()
 
 # =====================
 # REQUEST/RESPONSE MODELS
@@ -239,6 +229,7 @@ async def version():
             "legacy": "/optimise, /t2i, /t2v, /optimise/i2i, /optimise/t2v",
             "sealed_workshop": "/v2/optimise",
             "analysis": "/analyse",
+            "checkpoints": "/checkpoints",  # ✅ added here
             "health": "/health"
         }
     }
