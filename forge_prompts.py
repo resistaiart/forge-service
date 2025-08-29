@@ -1,4 +1,3 @@
-```python
 # forge_prompts.py
 import re
 import random
@@ -341,4 +340,3 @@ if __name__ == "__main__":
     print("\n=== Style Analysis ===")
     analysis = analyze_prompt_style("cyberpunk samurai with neon lights and futuristic city")
     pprint(analysis)
-```
