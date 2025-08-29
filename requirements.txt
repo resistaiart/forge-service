@@ -21,8 +21,8 @@ pyyaml==6.0.1
     # yaml configuration
 python-dotenv==1.0.1
     # env management
-python-multipart==0.0.6
-    # file uploads (fastapi)
+python-multipart==0.0.9
+    # file uploads (fastapi) — bumped for fastapi>=0.111.0
 requests==2.32.3
     # via requirements.in
 safetensors==0.4.4
