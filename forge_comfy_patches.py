@@ -1,4 +1,3 @@
-```python
 # forge_comfy_patches.py
 # 🔒 PRIVATE IMPLEMENTATION - Generates ComfyUI JSON patches
 # Does NOT conflict with forge_workflows.py
@@ -50,4 +49,3 @@ def generate_workflow_patch(settings: Dict[str, Any]) -> Dict[str, Any]:
         })
 
     return patch
-```
