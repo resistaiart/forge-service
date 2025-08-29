@@ -7,7 +7,7 @@ from forge_prompts import build_prompts, analyze_prompt_intent
 from forge_settings import build_settings
 from forge_resources import validate_resources
 from forge_captions import generate_captions
-from forge_workflow import generate_workflow_patch  # This will be new
+from forge_comfy_patches import generate_workflow_patch  # ✅ CORRECTED - uses new file
 from forge_profiles import load_profile, adapt_settings, adapt_captions
 
 def optimize_sealed(request: dict) -> dict:
@@ -44,4 +44,16 @@ def optimize_sealed(request: dict) -> dict:
         "menus": _get_menus(request['package_goal']),
         "package_goal": request['package_goal']
     }
+
+def _get_menus(package_goal: str) -> list:
+    """Get appropriate menus for the package goal"""
+    base_menus = ["variants", "prompt", "negatives", "config", "workflow", "version", "rationale", "discard", "help"]
+    
+    # Add goal-specific menus
+    if package_goal in ["i2i", "i2v"]:
+        base_menus.append("denoise")
+    if package_goal in ["t2v", "i2v"]:
+        base_menus.extend(["frames", "motion"])
+        
+    return base_menus
 ```
