@@ -118,12 +118,10 @@ def clean_prompt(prompt: str) -> str:
     if not prompt or not isinstance(prompt, str):
         return ""
     
-    # Remove extra whitespace and normalize punctuation
     prompt = re.sub(r"\s+", " ", prompt).strip()
     prompt = re.sub(r",\s*,", ",", prompt)
     prompt = re.sub(r"\.\s*\.", ".", prompt)
     
-    # Remove duplicate words (simple deduplication)
     words = prompt.split()
     seen = set()
     unique_words = []
@@ -141,10 +139,8 @@ def weight_keywords(prompt: str, custom_weights: Optional[Dict] = None) -> str:
     
     weights = {**_CONFIG["keyword_weights"], **(custom_weights or {})}
     
-    # Sort by length (longest first) to avoid partial matches
     for word in sorted(weights.keys(), key=len, reverse=True):
         weight = weights[word]
-        # Use word boundaries to avoid partial matches
         pattern = re.compile(rf"\b{re.escape(word)}\b", re.IGNORECASE)
         if pattern.search(prompt):
             prompt = pattern.sub(f"(({word}:{weight}))", prompt)
@@ -153,6 +149,9 @@ def weight_keywords(prompt: str, custom_weights: Optional[Dict] = None) -> str:
 
 def analyze_prompt_style(prompt: str) -> Dict[str, float]:
     """Analyze prompt to detect artistic style preferences."""
+    if not prompt:
+        return {s: 0.0 for s in ["realistic","anime","cyberpunk","fantasy","painting","scifi"]}
+    
     prompt_lower = prompt.lower()
     style_scores = {
         "realistic": 0, "anime": 0, "cyberpunk": 0, 
@@ -173,7 +172,6 @@ def analyze_prompt_style(prompt: str) -> Dict[str, float]:
             if keyword in prompt_lower:
                 style_scores[style] += 1
     
-    # Normalize scores
     total = sum(style_scores.values())
     if total > 0:
         for style in style_scores:
@@ -182,14 +180,12 @@ def analyze_prompt_style(prompt: str) -> Dict[str, float]:
     return style_scores
 
 def get_negative_prompt(additional_negatives: Optional[List[str]] = None) -> str:
-    """Get negative prompt with optional additional terms."""
     negative = _CONFIG["negative_prompt"]
     if additional_negatives:
         negative += ", " + ", ".join([n for n in additional_negatives if n])
     return negative
 
 def get_settings(goal: str = "t2i", style_analysis: Optional[Dict] = None) -> Dict:
-    """Get settings for a goal with optional style-based adjustments."""
     if goal not in _CONFIG["settings"]:
         logger.warning(f"Unknown goal '{goal}', defaulting to 't2i'")
         goal = "t2i"
@@ -197,22 +193,20 @@ def get_settings(goal: str = "t2i", style_analysis: Optional[Dict] = None) -> Di
     settings = _CONFIG["settings"][goal].copy()
     settings["seed"] = random.randint(1, 999999999)
     
-    # Apply style-based adjustments
     if style_analysis:
-        dominant_style = max(style_analysis.items(), key=lambda x: x[1])[0]
-        style_adjustments = {
-            "realistic": {"cfg_scale": -0.5, "steps": 5},
-            "anime": {"cfg_scale": 0.3, "steps": -2},
-            "cyberpunk": {"cfg_scale": 0.7, "steps": 3},
-            "fantasy": {"cfg_scale": 0.4, "steps": 2},
-        }
-        
-        if dominant_style in style_adjustments:
-            adj = style_adjustments[dominant_style]
-            settings["cfg_scale"] += adj.get("cfg_scale", 0)
-            settings["steps"] += adj.get("steps", 0)
+        dominant_style = max(style_analysis.items(), key=lambda x: x[1])
+        if dominant_style[1] > 0:  # only adjust if style is nonzero
+            style_adjustments = {
+                "realistic": {"cfg_scale": -0.5, "steps": 5},
+                "anime": {"cfg_scale": 0.3, "steps": -2},
+                "cyberpunk": {"cfg_scale": 0.7, "steps": 3},
+                "fantasy": {"cfg_scale": 0.4, "steps": 2},
+            }
+            if dominant_style[0] in style_adjustments:
+                adj = style_adjustments[dominant_style[0]]
+                settings["cfg_scale"] += adj.get("cfg_scale", 0)
+                settings["steps"] += adj.get("steps", 0)
     
-    # Ensure reasonable bounds
     settings["cfg_scale"] = max(1.0, min(20.0, settings["cfg_scale"]))
     settings["steps"] = max(10, min(100, settings["steps"]))
     settings["denoise"] = max(0.0, min(1.0, settings["denoise"]))
@@ -223,15 +217,15 @@ def get_settings(goal: str = "t2i", style_analysis: Optional[Dict] = None) -> Di
 # MAIN FUNCTIONS
 # =====================
 def build_prompts(prompt: str, profile: Optional[Dict] = None) -> Tuple[str, str]:
-    """
-    Build positive and negative prompts from input.
-    Returns: (positive_prompt, negative_prompt)
-    """
+    """Build positive and negative prompts safely."""
+    if not prompt or not isinstance(prompt, str):
+        return "", get_negative_prompt()
+    
     cleaned_prompt = clean_prompt(prompt)
     weighted_prompt = weight_keywords(cleaned_prompt)
     negative_prompt = get_negative_prompt()
     
-    return weighted_prompt, negative_prompt
+    return weighted_prompt or cleaned_prompt, negative_prompt
 
 def optimise_prompt_package(
     prompt: str,
@@ -241,36 +235,25 @@ def optimise_prompt_package(
     custom_weights: Optional[Dict] = None,
     checkpoint: Optional[str] = None
 ) -> Dict:
-    """Build an optimized prompt package with comprehensive metadata."""
-    
     try:
-        # Validate input
         if not prompt or not isinstance(prompt, str):
             raise ValueError("Prompt must be a non-empty string")
         
-        # Clean and analyze prompt
         base_prompt = clean_prompt(prompt)
         style_analysis = analyze_prompt_style(base_prompt)
         weighted_prompt = weight_keywords(base_prompt, custom_weights)
         
-        # Get settings with style adjustments
         negative_prompt = get_negative_prompt()
         settings = get_settings(goal, style_analysis)
-        
-        # Validate resources
         validated_resources = validate_resources(resources or [])
-        
-        # Get checkpoint suggestions
         preferred_checkpoint = checkpoint or settings.get("preferred_checkpoint", "")
         checkpoint_suggestions = suggest_checkpoints(preferred_checkpoint)
         
-        # Build diagnostics
         diagnostics = _build_diagnostics(settings, goal, style_analysis, validated_resources)
         
-        # Assemble package
         package = {
             "goal": goal,
-            "positive_prompt": weighted_prompt,
+            "positive_prompt": weighted_prompt or base_prompt,
             "negative_prompt": negative_prompt,
             "settings": settings,
             "resources": validated_resources,
@@ -278,10 +261,10 @@ def optimise_prompt_package(
             "style_analysis": style_analysis,
             "diagnostics": diagnostics,
             "metadata": {
-                "prompt_length": len(weighted_prompt),
+                "prompt_length": len(weighted_prompt or base_prompt),
                 "negative_length": len(negative_prompt),
                 "resource_count": len(validated_resources),
-                "word_count": len(weighted_prompt.split()),
+                "word_count": len((weighted_prompt or base_prompt).split()),
             },
             "checkpoint_suggestions": checkpoint_suggestions,
         }
@@ -294,7 +277,6 @@ def optimise_prompt_package(
         raise
 
 def _build_diagnostics(settings: Dict, goal: str, style_analysis: Dict, resources: List) -> Dict:
-    """Build detailed diagnostics explaining the choices."""
     diagnostics = {
         "cfg_reason": f"CFG {settings['cfg_scale']} tuned for {goal} balance",
         "sampler_choice": f"{settings['sampler']} chosen for stability and quality",
@@ -303,40 +285,17 @@ def _build_diagnostics(settings: Dict, goal: str, style_analysis: Dict, resource
         "steps_reason": f"{settings['steps']} steps for quality-speed balance",
     }
     
-    # Add style-specific reasoning
-    dominant_style = max(style_analysis.items(), key=lambda x: x[1])
-    if dominant_style[1] > 0.3:  # Only mention if significant
-        diagnostics["style_influence"] = f"Detected {dominant_style[0]} style influencing parameters"
+    if style_analysis:
+        dominant_style = max(style_analysis.items(), key=lambda x: x[1])
+        if dominant_style[1] > 0.3:
+            diagnostics["style_influence"] = f"Detected {dominant_style[0]} style influencing parameters"
     
-    # Add resource information
     if resources:
         diagnostics["resources_used"] = f"Using {len(resources)} validated resources"
     
-    # Goal-specific diagnostics
     if goal == "t2v":
         diagnostics["fps_reason"] = f"{settings.get('fps', 24)}fps for natural motion"
     elif goal == "i2i":
         diagnostics["transform_strength"] = f"Denoise {settings['denoise']} controls transformation intensity"
     
     return diagnostics
-
-# =====================
-# EXAMPLE USAGE
-# =====================
-if __name__ == "__main__":
-    # Test the function
-    test_package = optimise_prompt_package(
-        prompt="a cyberpunk samurai under neon rain, masterpiece, best quality, 4k",
-        goal="t2i",
-        resources=[{"name": "Cyberpunk Style", "type": "lora"}],
-        custom_weights={"cyberpunk": 1.4, "neon": 1.3}
-    )
-    
-    from pprint import pprint
-    print("=== Optimized Prompt Package ===")
-    pprint(test_package)
-    
-    # Test style analysis
-    print("\n=== Style Analysis ===")
-    analysis = analyze_prompt_style("cyberpunk samurai with neon lights and futuristic city")
-    pprint(analysis)
