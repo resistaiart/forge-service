@@ -138,6 +138,23 @@ def analyse_image_with_envelope(image_input: Union[str, bytes], mode: str = "bas
             "message": f"Image analysis failed: {str(e)}"
         }
 
+# 🔥 NEW: sealed API entrypoint for main.py
+def analyse_sealed(request: dict) -> Dict[str, Any]:
+    """
+    Sealed entrypoint for API route /v2/analyse.
+    """
+    image_url = request.get("image_url")
+    mode = request.get("mode", "basic")
+
+    if not image_url:
+        return {
+            "outcome": "error",
+            "result": None,
+            "message": "image_url is required"
+        }
+
+    return analyse_image_with_envelope(image_url, mode)
+
 # Example usage and testing
 if __name__ == "__main__":
     # Configure logging for testing
