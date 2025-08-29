@@ -1,4 +1,3 @@
-```python
 # forge_integrations.py
 import os
 import requests
@@ -217,4 +216,3 @@ civitai = integration_manager.get("civitai")
 if civitai:
     models = civitai.search_models("cyberpunk", limit=5)
     print("Found models:", models)
-```
