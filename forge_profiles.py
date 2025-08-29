@@ -224,8 +224,7 @@ def delete_profile(user_id: str) -> bool:
     except Exception as e:
         logger.error(f"Failed to delete profile for '{user_id}': {e}")
         return False
-```
-
+        
 ### Key Enhancements:
 
 1. **Persistence**: Added file-based storage for profiles
@@ -240,7 +239,6 @@ def delete_profile(user_id: str) -> bool:
 
 ### Usage Examples:
 
-```python
 # Load a profile
 profile = load_profile("user123")
 
