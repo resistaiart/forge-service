@@ -22,7 +22,7 @@ def optimize_sealed(request: dict) -> dict:
     intent = analyze_prompt_style(cleaned_prompt)
     
     # 3. Use your existing prompt building
-    positive, negative = build_prompts(cleaned_prompt, intent)
+   positive, negative = build_prompts(cleaned_prompt, intent)
     
     # 4. Use your existing settings system
     profile = request.get("profile")  # may be None
