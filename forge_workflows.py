@@ -334,3 +334,4 @@ i2v_package = optimise_i2v_package(
     motion_intensity="low",
     denoise_strength=0.4
 )
+```
