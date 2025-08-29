@@ -2,7 +2,7 @@
 # 🔒 PRIVATE IMPLEMENTATION - Orchestrates your existing modules
 
 from forge_safety import safety_scrub
-from forge_prompts import build_prompts, analyze_prompt_intent
+from forge_prompts import build_prompts, analyze_prompt_style
 from forge_settings import build_settings
 from forge_resources import validate_resources
 from forge_captions import generate_captions
@@ -15,7 +15,7 @@ def optimize_sealed(request: dict) -> dict:
     cleaned_prompt = safety_scrub(request['prompt'])
     
     # 2. Use your existing prompt analysis
-    intent = analyze_prompt_intent(cleaned_prompt)
+    intent = analyze_prompt_style(cleaned_prompt)
     
     # 3. Use your existing prompt building
     positive, negative = build_prompts(cleaned_prompt, intent)
