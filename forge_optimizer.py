@@ -1,4 +1,3 @@
-```python
 # forge_optimizer.py
 # 🔒 PRIVATE IMPLEMENTATION - Orchestrates your existing modules
 
@@ -56,4 +55,3 @@ def _get_menus(package_goal: str) -> list:
         base_menus.extend(["frames", "motion"])
         
     return base_menus
-```
