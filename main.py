@@ -18,6 +18,24 @@ from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise
 from forge_optimizer import optimize_sealed
 
 # =====================
+# APP INIT
+# =====================
+app = FastAPI(title=settings.app_name, version="2.0")  # Bumped to v2.0 for sealed workshop
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins.split(","),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Logging
+logging.basicConfig(level=logging.INFO, format="[Forge] %(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
+
+# =====================
 # CHECKPOINT SEARCH HELPERS
 # =====================
 def search_hf_models(query="stable-diffusion", limit=5):
@@ -59,24 +77,6 @@ class Settings(BaseModel):
     debug: bool = os.getenv("DEBUG", "False").lower() == "true"
 
 settings = Settings()
-
-# =====================
-# APP INIT
-# =====================
-app = FastAPI(title=settings.app_name, version="2.0")  # Bumped to v2.0 for sealed workshop
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins.split(","),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Logging
-logging.basicConfig(level=logging.INFO, format="[Forge] %(levelname)s: %(message)s")
-logger = logging.getLogger(__name__)
 
 # =====================
 # REQUEST/RESPONSE MODELS
