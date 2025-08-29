@@ -1,6 +1,4 @@
 ### Enhanced `forge_captions.py`
-
-```python
 # forge_captions.py
 import re
 import random
@@ -251,4 +249,3 @@ if __name__ == "__main__":
     tech_captions = generate_captions(test_prompt, profile=tech_profile)
     for key, value in tech_captions.items():
         print(f"{key}: {value}")
-```
