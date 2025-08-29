@@ -4,7 +4,7 @@ import re
 from typing import Dict, List, Optional, Any
 
 # Use absolute imports (no dots)
-from forge_prompts import clean_prompt, analyze_prompt_intent, weight_keywords
+from forge_prompts import clean_prompt, analyze_prompt_style, weight_keywords
 
 # Video-specific configuration
 VIDEO_MODELS = {
