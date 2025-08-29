@@ -1,4 +1,3 @@
-### Enhanced `forge_settings.py`
 # forge_settings.py
 import random
 import logging
@@ -111,115 +110,69 @@ _DEFAULT_SETTINGS = {
 }
 
 def build_settings(profile: Optional[Dict[str, Any]] = None, package_goal: str = "t2i") -> Dict[str, Any]:
-    """
-    Builds optimized generation settings based on goal type and user profile.
-    
-    Args:
-        profile: User profile containing preferences and settings overrides
-        package_goal: The generation goal (t2i, t2v, i2i, i2v, upscale, interrogate)
-    
-    Returns:
-        Dictionary of optimized generation settings with seed
-    
-    Raises:
-        ValueError: If package_goal is not supported
-    """
-    # Validate goal type
     if package_goal not in _DEFAULT_SETTINGS:
         logger.warning(f"Unknown goal '{package_goal}', defaulting to 't2i'")
         package_goal = GoalType.T2I.value
-    
-    # Get base settings for the goal
     settings = _DEFAULT_SETTINGS[package_goal].copy()
-    
-    # Apply profile preferences if available
     if profile:
         settings = _apply_profile_settings(settings, profile, package_goal)
-    
-    # Add random seed
     settings["seed"] = random.randint(1, 999999999)
-    
-    # Ensure values are within reasonable bounds
     settings = _validate_and_constrain_settings(settings, package_goal)
-    
     logger.info(f"Built settings for goal '{package_goal}' with seed {settings['seed']}")
     return settings
 
 def _apply_profile_settings(settings: Dict[str, Any], profile: Dict[str, Any], goal: str) -> Dict[str, Any]:
-    """Apply user profile preferences to settings."""
     settings = settings.copy()
-    
-    # Apply preferred checkpoint
     preferred_checkpoint = profile.get("preferred_checkpoint")
     if preferred_checkpoint:
         settings["checkpoint"] = preferred_checkpoint
-    
-    # Apply preferred sampler
     preferred_sampler = profile.get("preferred_sampler")
     if preferred_sampler:
         settings["sampler"] = preferred_sampler
-    
-    # Apply verbosity adjustments
     verbosity = profile.get("verbosity", "normal")
     if verbosity == "verbose":
         settings["steps"] += 8
     elif verbosity == "compact":
         settings["steps"] = max(15, settings["steps"] - 5)
-    
-    # Apply style-specific adjustments from profile
     style_boost = profile.get("style_boost", {})
     detected_style = settings.get("detected_style")
     if detected_style and detected_style in style_boost:
         boost = style_boost[detected_style]
         settings["cfg_scale"] += boost.get("cfg_adjust", 0)
         settings["steps"] += boost.get("steps_adjust", 0)
-    
     return settings
 
 def _validate_and_constrain_settings(settings: Dict[str, Any], goal: str) -> Dict[str, Any]:
-    """Ensure settings are within reasonable bounds."""
     settings = settings.copy()
-    
-    # Define constraints for different parameters
     constraints = {
-        "steps": (10, 100),          # Min, Max steps
-        "cfg_scale": (1.0, 20.0),    # Min, Max CFG
-        "denoise": (0.0, 1.0),       # Min, Max denoise
-        "batch_size": (1, 8),        # Min, Max batch size
-        "clip_skip": (1, 4),         # Min, Max clip skip
-        "fps": (1, 60),              # Min, Max FPS for video
+        "steps": (10, 100),
+        "cfg_scale": (1.0, 20.0),
+        "denoise": (0.0, 1.0),
+        "batch_size": (1, 8),
+        "clip_skip": (1, 4),
+        "fps": (1, 60),
     }
-    
-    # Apply constraints
     for param, (min_val, max_val) in constraints.items():
         if param in settings:
             if param == "denoise":
                 settings[param] = max(min_val, min(max_val, settings[param]))
             else:
                 settings[param] = int(max(min_val, min(max_val, settings[param])))
-    
-    # Goal-specific constraints
     if goal == GoalType.T2V.value or goal == GoalType.I2V.value:
         settings["motion_bucket_id"] = max(1, min(255, settings.get("motion_bucket_id", 127)))
         settings["augmentation_level"] = max(0.0, min(1.0, settings.get("augmentation_level", 0.1)))
-    
     return settings
 
 def get_available_goals() -> list:
-    """Get list of available generation goals."""
     return list(_DEFAULT_SETTINGS.keys())
 
 def get_default_settings(goal: str) -> Dict[str, Any]:
-    """Get the default settings for a specific goal."""
     if goal not in _DEFAULT_SETTINGS:
         raise ValueError(f"Unknown goal: {goal}. Available goals: {list(_DEFAULT_SETTINGS.keys())}")
     return _DEFAULT_SETTINGS[goal].copy()
 
 def explain_settings(settings: Dict[str, Any]) -> Dict[str, str]:
-    """Generate explanations for each setting choice."""
     explanations = {}
-    
-    # Sampler explanations
     sampler_explanations = {
         SamplerType.DPM_PP_2M.value: "DPM++ 2M Karras: Balanced quality and speed",
         SamplerType.EULER_A.value: "Euler a: Good for creative generations",
@@ -227,14 +180,10 @@ def explain_settings(settings: Dict[str, Any]) -> Dict[str, str]:
         SamplerType.LMS.value: "LMS: Good for detailed outputs",
         SamplerType.DDIM.value: "DDIM: Classic sampler, good for reproducibility"
     }
-    
     if "sampler" in settings:
         explanations["sampler"] = sampler_explanations.get(
-            settings["sampler"], 
-            f"{settings['sampler']}: Custom sampler choice"
+            settings["sampler"], f"{settings['sampler']}: Custom sampler choice"
         )
-    
-    # CFG scale explanations
     if "cfg_scale" in settings:
         cfg = settings["cfg_scale"]
         if cfg < 5.0:
@@ -243,8 +192,6 @@ def explain_settings(settings: Dict[str, Any]) -> Dict[str, str]:
             explanations["cfg_scale"] = f"CFG {cfg}: Balanced guidance and creativity"
         else:
             explanations["cfg_scale"] = f"CFG {cfg}: High guidance, follows prompt closely"
-    
-    # Steps explanations
     if "steps" in settings:
         steps = settings["steps"]
         if steps < 20:
@@ -253,23 +200,33 @@ def explain_settings(settings: Dict[str, Any]) -> Dict[str, str]:
             explanations["steps"] = f"{steps} steps: Balanced speed and quality"
         else:
             explanations["steps"] = f"{steps} steps: High quality, slower generation"
-    
     return explanations
 
-# Example usage and testing
-if __name__ == "__main__":
-    # Test different goals
-    test_goals = ["t2i", "t2v", "i2i", "upscale"]
-    
-    for goal in test_goals:
-        print(f"\n=== Settings for {goal} ===")
-        settings = build_settings(package_goal=goal)
-        
-        for key, value in settings.items():
-            print(f"  {key}: {value}")
-        
-        # Show explanations
-        explanations = explain_settings(settings)
-        print(f"\n  Explanations:")
-        for param, explanation in explanations.items():
-            print(f"    {param}: {explanation}")
+# === New: API Support Functions ===
+
+def get_defaults() -> Dict[str, str]:
+    return {
+        "default_prompt": "a blacksmith forging a glowing sword in a fiery workshop, cinematic lighting",
+        "default_goal": GoalType.T2I.value
+    }
+
+def infer_goal_from_prompt(prompt: str) -> Dict[str, Any]:
+    prompt_lower = prompt.lower()
+    if any(kw in prompt_lower for kw in ["video", "animation", "frames", "moving", "motion"]):
+        goal = GoalType.T2V.value
+        confidence = 0.9
+    elif any(kw in prompt_lower for kw in ["enhance", "upscale", "sharpen"]):
+        goal = GoalType.UPSCALE.value
+        confidence = 0.85
+    elif any(kw in prompt_lower for kw in ["describe", "what is", "caption", "interrogate"]):
+        goal = GoalType.INTERROGATE.value
+        confidence = 0.9
+    else:
+        goal = GoalType.T2I.value
+        confidence = 0.7
+
+    return {
+        "inferred_goal": goal,
+        "confidence": confidence,
+        "recommendation": f"Set goal to {goal} for best results."
+    }
