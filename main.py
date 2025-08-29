@@ -1,4 +1,3 @@
-```python
 # main.py
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
@@ -219,4 +218,3 @@ async def global_exception_handler(request: Request, exc: Exception):
 # =====================
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
-```
