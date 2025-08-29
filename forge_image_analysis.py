@@ -14,8 +14,10 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"} if HF_TOKEN else {}
 
 MODELS = {
-    "basic": "nlpconnect/vit-gpt2-image-captioning",
+    "basic": "Salesforce/blip-image-captioning-base",
     "detailed": "Salesforce/instructblip-vicuna-7b",
+    # 🔥 new tags mode uses blip-base under the hood
+    "tags": "Salesforce/blip-image-captioning-base",
 }
 
 DEFAULT_RETRY_DELAY = 30
@@ -69,14 +71,14 @@ def analyse_image(image_input: Union[str, bytes], caption: Optional[str] = None,
     Args:
         image_input: URL string or image bytes
         caption: Optional caption for context
-        mode: 'basic' or 'detailed'
+        mode: 'basic', 'detailed', or 'tags'
     
     Returns:
         Dictionary with analysis results
     """
     try:
         if mode not in MODELS:
-            raise ValueError(f"Invalid mode '{mode}'. Use 'basic' or 'detailed'.")
+            raise ValueError(f"Invalid mode '{mode}'. Use 'basic', 'detailed', or 'tags'.")
 
         model_id = MODELS[mode]
 
@@ -87,8 +89,8 @@ def analyse_image(image_input: Union[str, bytes], caption: Optional[str] = None,
         else:
             image_data = image_input
 
-        # Prepare payload based on mode
-        if mode == "basic":
+        # Prepare payload
+        if mode == "basic" or mode == "tags":
             payload = {"inputs": image_data}
         else:
             question = "Describe this image in extreme detail. Include objects, colors, composition, style, mood, and any text visible."
@@ -108,6 +110,17 @@ def analyse_image(image_input: Union[str, bytes], caption: Optional[str] = None,
             description = result["generated_text"].strip()
         else:
             raise Exception(f"Unexpected response format from {model_id}: {result}")
+
+        # If tags mode, split description into keyword tags
+        if mode == "tags":
+            words = [w.strip(".,").lower() for w in description.split()]
+            tags = list(dict.fromkeys([w for w in words if len(w) > 2]))  # dedup, no tiny words
+            return {
+                "mode": mode,
+                "tags": tags,
+                "raw_caption": description,
+                "model_used": model_id
+            }
 
         return {
             "mode": mode,
@@ -160,7 +173,6 @@ if __name__ == "__main__":
     # Configure logging for testing
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     
-    # Test with a public image URL
     test_url = "https://huggingface.co/datasets/hf-internal-testing/example-images/resolve/main/cat.png"
     
     try:
@@ -171,6 +183,10 @@ if __name__ == "__main__":
         print("\nTesting detailed analysis...")
         result_detailed = analyse_image(test_url, mode="detailed")
         print(f"Detailed result: {result_detailed['description']}")
+        
+        print("\nTesting tags analysis...")
+        result_tags = analyse_image(test_url, mode="tags")
+        print(f"Tags result: {result_tags['tags']}")
         
     except Exception as e:
         print(f"Error: {e}")
