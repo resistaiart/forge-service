@@ -1,4 +1,3 @@
-```python
 result = await run_in_threadpool(analyse_image, str(request.image_url), None, request.mode)
 ```
 
@@ -132,4 +131,3 @@ def analyse_image_with_envelope(image_input: Union[str, bytes], mode: str = "bas
             "result": None,
             "message": f"Image analysis failed: {str(e)}"
         }
-```
