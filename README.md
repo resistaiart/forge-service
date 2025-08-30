@@ -131,7 +131,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 
 AI art workflows are fragmented across dozens of tools and platforms. Prompts, captions, checkpoints, LoRAs, configs, and workflow graphs are scattered everywhere. This fragmentation wastes creative cycles and kills momentum.
 
-### The Solution: Prompt Packages
+### The Solution: AI Optimised Prompt Packages! ✅
 
 **Prompt Packages are synchronised, structured blueprints** that eliminate fragmentation. Each package:**
 
