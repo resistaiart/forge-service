@@ -1,9 +1,14 @@
-### Enhanced `forge_captions.py`
 # forge_captions.py
 import re
 import random
+import logging
 from typing import Dict, List, Optional
 from enum import Enum
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 class CaptionStyle(Enum):
     HOOK = "hook"
@@ -13,12 +18,14 @@ class CaptionStyle(Enum):
     SOCIAL = "social"
     MINIMAL = "minimal"
 
+
 class Tone(Enum):
     NEUTRAL = "neutral"
     DRAMATIC = "dramatic"
     TECHNICAL = "technical"
     STORYTELLING = "storytelling"
     PROMOTIONAL = "promotional"
+
 
 # Template library for different caption styles
 CAPTION_TEMPLATES = {
@@ -67,39 +74,36 @@ CAPTION_TEMPLATES = {
     }
 }
 
+
 # Hashtag collections
 HASHTAG_SETS = {
-    "default": ["AIart", "ComfyUI", "StableDiffusion", "TheForge", "GenerativeAI"],
-    "technical": ["AIEngineering", "PromptDesign", "SDXL", "DiffusionModel", "TechArt"],
-    "creative": ["DigitalArt", "CreativeAI", "ArtisticAI", "FutureArt", "NeoArt"],
-    "community": ["AIArtCommunity", "GenAI", "MachineLearningArt", "ComputationalCreativity"]
+    "default": ["aiart", "comfyui", "stablediffusion", "theforge", "generativeai"],
+    "technical": ["aiengineering", "promptdesign", "sdxl", "diffusionmodel", "techart"],
+    "creative": ["digitalart", "creativeai", "artisticai", "futureart", "neoart"],
+    "community": ["aiartcommunity", "genai", "machinelearningart", "computationalcreativity"]
 }
 
-def generate_captions(prompt: str, caption: Optional[str] = None, 
-                     profile: Optional[Dict] = None) -> Dict[str, str]:
+
+def generate_captions(
+    prompt: str,
+    caption: Optional[str] = None,
+    profile: Optional[Dict] = None,
+    seed: Optional[int] = None
+) -> Dict[str, str]:
     """
     Generate comprehensive captions in multiple styles and tones.
-    
-    Args:
-        prompt: The main prompt/description of the content
-        caption: Optional additional context or existing caption
-        profile: User profile containing preferences and style settings
-    
-    Returns:
-        Dictionary of captions for different purposes
     """
     if profile is None:
         profile = {}
-    
-    # Use provided caption or generate from prompt
+    if seed is not None:
+        random.seed(seed)
+
     description = caption if caption else prompt
     tone = profile.get("tone", Tone.NEUTRAL.value)
     style_preference = profile.get("caption_style", "balanced")
-    
-    # Extract key elements for more intelligent captioning
+
     prompt_elements = _analyze_prompt(prompt)
-    
-    # Generate each caption type
+
     captions = {
         "hook": _generate_hook(description, tone, prompt_elements),
         "narrative": _generate_narrative(description, tone, prompt_elements),
@@ -109,143 +113,129 @@ def generate_captions(prompt: str, caption: Optional[str] = None,
         "hashtags": _generate_hashtags(prompt_elements, style_preference),
         "metadata": _generate_metadata(prompt, profile)
     }
-    
-    # Apply profile-based adaptations
-    captions = _apply_profile_adaptations(captions, profile)
-    
-    return captions
+
+    return _apply_profile_adaptations(captions, profile)
+
 
 def _analyze_prompt(prompt: str) -> Dict[str, List[str]]:
     """Analyze prompt to extract key elements for better caption generation."""
     prompt_lower = prompt.lower()
-    
-    # Simple analysis - can be enhanced with NLP later
+    words = re.findall(r"\w+", prompt_lower)
+
     elements = {
         "subjects": [],
         "styles": [],
         "moods": [],
         "environments": [],
-        "keywords": prompt.split()[:10]  # First 10 words as keywords
+        "keywords": list(dict.fromkeys(words[:10]))  # dedup first 10 words
     }
-    
-    # Basic keyword detection (can be expanded)
-    style_keywords = ["cyberpunk", "realistic", "anime", "fantasy", "cinematic", "painting"]
-    mood_keywords = ["epic", "dark", "bright", "mysterious", "serene", "dramatic"]
-    environment_keywords = ["landscape", "portrait", "city", "nature", "space", "interior"]
-    
-    for word in prompt_lower.split():
+
+    style_keywords = {"cyberpunk", "realistic", "anime", "fantasy", "cinematic", "painting"}
+    mood_keywords = {"epic", "dark", "bright", "mysterious", "serene", "dramatic"}
+    environment_keywords = {"landscape", "portrait", "city", "nature", "space", "interior"}
+
+    for word in words:
         if word in style_keywords:
             elements["styles"].append(word)
         elif word in mood_keywords:
             elements["moods"].append(word)
         elif word in environment_keywords:
             elements["environments"].append(word)
-        elif len(word) > 5:  # Longer words are likely subjects
+        elif len(word) > 5:
             elements["subjects"].append(word)
-    
+
     return elements
 
+
 def _generate_hook(description: str, tone: str, elements: Dict) -> str:
-    """Generate an engaging hook caption."""
     tone_enum = Tone(tone) if tone in [t.value for t in Tone] else Tone.NEUTRAL
-    templates = CAPTION_TEMPLATES[CaptionStyle.HOOK].get(tone_enum, CAPTION_TEMPLATES[CaptionStyle.HOOK][Tone.NEUTRAL])
-    
-    template = random.choice(templates)
-    return template.format(prompt=description, mood=elements.get("moods", ["epic"])[0])
+    templates = CAPTION_TEMPLATES[CaptionStyle.HOOK].get(
+        tone_enum, CAPTION_TEMPLATES[CaptionStyle.HOOK][Tone.NEUTRAL]
+    )
+    return random.choice(templates).format(prompt=description, mood=elements.get("moods", ["epic"])[0])
+
 
 def _generate_narrative(description: str, tone: str, elements: Dict) -> str:
-    """Generate a narrative description."""
-    tone_enum = Tone(tone) if tone in [t.value for t in Tone] else Tone.NEUTRAL
-    templates = CAPTION_TEMPLATES[CaptionStyle.NARRATIVE].get(tone_enum, CAPTION_TEMPLATES[CaptionStyle.NARRATIVE][Tone.STORYTELLING])
-    
-    template = random.choice(templates)
-    return template.format(prompt=description)
+    tone_enum = Tone(tone) if tone in [t.value for t in Tone] else Tone.STORYTELLING
+    templates = CAPTION_TEMPLATES[CaptionStyle.NARRATIVE].get(
+        tone_enum, CAPTION_TEMPLATES[CaptionStyle.NARRATIVE][Tone.STORYTELLING]
+    )
+    return random.choice(templates).format(prompt=description)
+
 
 def _generate_technical(description: str, elements: Dict, profile: Dict) -> str:
-    """Generate a technical description."""
     technical_details = {
         "prompt": description,
         "cfg": profile.get("default_cfg_scale", "7.5"),
         "steps": profile.get("default_steps", "28"),
         "sampler": profile.get("preferred_sampler", "DPM++ 2M Karras")
     }
-    
     template = random.choice(CAPTION_TEMPLATES[CaptionStyle.TECHNICAL][Tone.TECHNICAL])
     return template.format(**technical_details)
 
+
 def _generate_alt_text(description: str, elements: Dict) -> str:
-    """Generate accessibility-friendly alt text."""
     subjects = elements.get("subjects", [])
     styles = elements.get("styles", [])
-    
+
     if subjects and styles:
         alt_text = f"{' '.join(styles)} style artwork depicting {', '.join(subjects[:3])}"
     else:
         alt_text = f"AI-generated artwork showing {description.lower()}"
-    
+
     return alt_text + ". Digital art created with generative AI."
 
+
 def _generate_social(description: str, tone: str) -> str:
-    """Generate social media optimized caption."""
     emojis = {
         Tone.NEUTRAL: "✨🎨⚡",
         Tone.DRAMATIC: "🔥⚔️🌌",
         Tone.PROMOTIONAL: "🚀🎯💎"
     }
-    
     emoji_set = emojis.get(Tone(tone), emojis[Tone.NEUTRAL])
     return f"{emoji_set} {description} {emoji_set}"
 
+
 def _generate_hashtags(elements: Dict, style: str) -> str:
-    """Generate relevant hashtags."""
-    base_tags = HASHTAG_SETS["default"]
-    
-    # Add style-specific tags
+    tags = set(HASHTAG_SETS["default"])
     if style == "technical":
-        base_tags.extend(HASHTAG_SETS["technical"])
+        tags.update(HASHTAG_SETS["technical"])
     elif style == "creative":
-        base_tags.extend(HASHTAG_SETS["creative"])
-    
-    # Add tags based on content
+        tags.update(HASHTAG_SETS["creative"])
+
     if elements.get("styles"):
-        base_tags.extend([f"#{s}" for s in elements["styles"][:2]])
-    
-    return " ".join([f"#{tag}" for tag in base_tags[:8]])  # Limit to 8 hashtags
+        tags.update([s.lower() for s in elements["styles"][:2]])
+
+    return " ".join([f"#{tag}" for tag in sorted(tags)[:8]])
+
 
 def _generate_metadata(prompt: str, profile: Dict) -> str:
-    """Generate metadata description."""
-    return f"Prompt: {prompt} | Profile: {profile.get('verbosity', 'normal')} | Style: {profile.get('caption_style', 'balanced')}"
+    return (
+        f"Prompt: {prompt} | "
+        f"Profile: {profile.get('verbosity', 'normal')} | "
+        f"Style: {profile.get('caption_style', 'balanced')} | "
+        f"Timestamp: {datetime.utcnow().isoformat()}Z"
+    )
+
 
 def _apply_profile_adaptations(captions: Dict[str, str], profile: Dict) -> Dict[str, str]:
-    """Apply profile-based adaptations to captions."""
     style = profile.get("caption_style", "balanced")
-    
     if style == "technical":
         captions["narrative"] = f"[Technical Analysis] {captions['narrative']}"
         captions["hook"] = f"Technical Overview: {captions['hook']}"
     elif style == "narrative":
         captions["narrative"] = f"[Story] {captions['narrative']}"
         captions["hook"] = f"Story: {captions['hook']}"
-    
     return captions
 
-# Backward compatibility function
+
 def generate_captions_legacy(prompt, caption=None, profile=None):
     """Legacy function signature for backward compatibility."""
     return generate_captions(prompt, caption, profile)
 
-# Example usage
+
 if __name__ == "__main__":
-    # Test with different prompts and profiles
     test_prompt = "cyberpunk samurai in neon-lit Tokyo streets"
-    
-    print("=== Default Captions ===")
-    captions = generate_captions(test_prompt)
+    captions = generate_captions(test_prompt, seed=42)
     for key, value in captions.items():
-        print(f"{key}: {value}")
-    
-    print("\n=== Technical Profile ===")
-    tech_profile = {"caption_style": "technical", "tone": "technical"}
-    tech_captions = generate_captions(test_prompt, profile=tech_profile)
-    for key, value in tech_captions.items():
-        print(f"{key}: {value}")
+        logger.info(f"{key}: {value}")
