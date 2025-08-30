@@ -1,8 +1,3 @@
-"""
-forge_benchmarking.py
-Provides benchmark simulation and assessment tools for Forge.
-"""
-
 import time
 import random
 import psutil
@@ -95,3 +90,14 @@ def simulate_benchmark(category: BenchmarkCategory, seed: int | None = None) -> 
         "status": "simulated",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
+
+def run_benchmarks(level: BenchmarkLevel = BenchmarkLevel.BASIC, seed: int | None = None) -> Dict[str, Any]:
+    """Run the selected benchmarks based on the level."""
+    benchmark_results = {}
+    categories = _BENCHMARK_CONFIG.get(level, {})
+
+    for category, enabled in categories.items():
+        if enabled:
+            benchmark_results[category] = simulate_benchmark(category, seed)
+
+    return benchmark_results
