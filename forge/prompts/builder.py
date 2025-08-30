@@ -72,4 +72,13 @@ def _build_diagnostics(settings: Dict, goal: str, style_analysis: Dict, resource
         "steps_reason": f"{settings['steps']} steps for quality-speed balance",
     }
     if style_analysis:
-        dominant_st_
+        dominant_style, score = max(style_analysis.items(), key=lambda x: x[1])
+        if score > 0.3:
+            diag["style_influence"] = f"Detected {dominant_style} style influencing parameters"
+    if resources:
+        diag["resources_used"] = f"Using {len(resources)} validated resources"
+    if goal == "t2v":
+        diag["fps_reason"] = f"{settings.get('fps', 24)}fps for natural motion"
+    elif goal == "i2i":
+        diag["transform_strength"] = f"Denoise {settings['denoise']} controls transformation intensity"
+    return diag
