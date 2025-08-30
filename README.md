@@ -63,7 +63,7 @@ Each Optimised Prompt Package:
 - Aspect Ratio
 - Content Preferences
 - And much more
-These profiles are stored and used to adapt the settings for each generation request, ensuring personalised output.
+These user profiles are stored and used to adapt the Forge for each future request, ensuring personalised outputs.
 
 ## 🔎 Diagnostics
 **The Forge provides detailed diagnostics explaining optimisation choices, such as:**
