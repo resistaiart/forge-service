@@ -35,7 +35,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 - **📦 Resource Management**: Validates and suggests the best models, LoRAs, and checkpoints
 - **🛠️ Workflow Integration**: Creates ready-to-use packages for ComfyUI and other AI tools
 
-### 🏹Forge Features:
+## 🏹Forge Features:
 - **Text-to-Image (T2I)**: Generate images based on textual prompts.
 - **Image-to-Image (I2I)**: Transform existing images based on new prompts.
 - **Text-to-Video (T2V)**: Create videos from textual descriptions.
@@ -46,7 +46,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 - **Comprehensive Diagnostics**: Provides detailed explanations of the chosen settings and alternative options.
 - **Integration Support**: Easily integrates with external APIs and services.
 
-### ⚙️The Forge Core:###
+## ⚙️The Forge Core:###
 - **main.py**: The entry point for the FastAPI app. It defines the web server and routes for various functionalities, such as health checks, manifest routes, and sealed/legacy API routes.
 - **workflows.py**: Handles the core logic for generating and optimising images/videos based on the user's request.
 - **prompts.py**: Builds and cleans prompts, applies custom weights, and analyses the prompt style for optimised content generation.
