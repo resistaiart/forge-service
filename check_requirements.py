@@ -31,23 +31,14 @@ def read_requirements_file(file_path):
 
 def extract_package_name(requirement_line):
     """Extract the package name from a requirement line."""
-    # Handle various requirement formats:
-    # package==version
-    # package>=version
-    # package<=version
-    # package~=version
-    # package
-    # git+https://...
-    # -e .
-    
     line = requirement_line.strip()
     
     # Skip editable installs and direct URLs for this check
-    if line.startswith(('-e ', 'git+', 'http://', 'https://')):
+    if line.startswith(("-e ", "git+", "http://", "https://")):
         return None
     
     # Extract package name before any version specifiers
-    for specifier in ['==', '>=', '<=', '~=', '>', '<', '!=']:
+    for specifier in ["==", ">=", "<=", "~=", ">", "<", "!="]:
         if specifier in line:
             return line.split(specifier)[0].strip().lower()
     
@@ -79,43 +70,48 @@ def main():
         print(f"❌ {error}")
         sys.exit(1)
     
-    # Extract package names from requirements.in
+    # Extract package definitions (name → full line)
     in_packages = {}
     for line in in_lines:
         pkg_name = extract_package_name(line)
-        if pkg_name:  # Skip None values (URLs, editable installs)
-            in_packages[pkg_name] = line
+        if pkg_name:
+            in_packages[pkg_name.lower()] = line
     
-    # Extract package names from requirements.txt
     txt_packages = {}
     for line in txt_lines:
         pkg_name = extract_package_name(line)
         if pkg_name:
-            txt_packages[pkg_name] = line
+            txt_packages[pkg_name.lower()] = line
     
-    # Check for mismatches
     errors = []
     warnings = []
     
-    # Check packages in .in that are missing in .txt
+    # Check for missing packages
     for pkg_name, original_line in in_packages.items():
         if pkg_name not in txt_packages:
-            errors.append(f"{pkg_name} (from: {original_line})")
+            errors.append(f"{pkg_name} (in {req_in.name} but missing in {req_txt.name})")
+        else:
+            # Version mismatch detection
+            if in_packages[pkg_name] != txt_packages[pkg_name]:
+                errors.append(
+                    f"{pkg_name} version mismatch: "
+                    f"{in_packages[pkg_name]} vs {txt_packages[pkg_name]}"
+                )
     
-    # Warn about packages in .txt that aren't in .in (possible transitive dependencies)
+    # Warn about extra packages in requirements.txt
     for pkg_name, original_line in txt_packages.items():
         if pkg_name not in in_packages:
-            warnings.append(f"{pkg_name} (from: {original_line})")
+            warnings.append(f"{pkg_name} (present in {req_txt.name}, not in {req_in.name})")
     
     # Report results
     if errors:
-        print("❌ CRITICAL: Packages in requirements.in but missing from requirements.txt:")
+        print("❌ CRITICAL: Dependency alignment errors found:")
         for error in errors:
             print(f"   - {error}")
         print("\n💡 Run: pip-compile requirements.in to regenerate requirements.txt")
     
     if warnings:
-        print("\n⚠️  WARNING: Packages in requirements.txt but not in requirements.in (likely transitive dependencies):")
+        print("\n⚠️  WARNING: Extra packages in requirements.txt (likely transitive deps):")
         for warning in warnings:
             print(f"   - {warning}")
     
@@ -123,7 +119,7 @@ def main():
         print("✅ Forge dependency sanity check passed - requirements are synchronized")
         return 0
     elif warnings and not errors:
-        print("\n✅ Requirements are synchronized (warnings are normal for transitive dependencies)")
+        print("\n✅ Requirements are synchronized (warnings are acceptable for transitive dependencies)")
         return 0
     else:
         return 1
