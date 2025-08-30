@@ -16,7 +16,7 @@ AI image/video workflows are fragmented across dozens of tools and platforms. Pr
 
 ### The Solution: AI Optimised Prompt Packages! ✅
 
-💥**Prompt Packages are synchronised, structured blueprints** that eliminate fragmentation. 
+💥**These are synchronised, structured blueprints** that eliminate prompt fragmentation! 
 
 **Each Optimised Prompt Package:** 
 - **Ties directly** to exact ComfyUI workflows (text-to-image, text-to-video, image-to-video, etc)
