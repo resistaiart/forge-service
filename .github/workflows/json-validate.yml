@@ -21,20 +21,36 @@ jobs:
           pip install jsonschema
 
       - name: Validate forge_manifest.json is valid JSON
-        run: |
-          jq . forge_manifest.json > /dev/null
+        run: jq . forge_manifest.json > /dev/null
 
       - name: Validate forge_contracts.json is valid JSON
-        run: |
-          jq . contracts/forge_contracts.json > /dev/null
+        run: jq . contracts/forge_contracts.json > /dev/null
 
-      - name: Validate forge_contracts.json against JSON Schema Draft 2020-12
+      - name: Validate forge_contracts.json is a valid JSON Schema Draft 2020-12
         run: |
           python3 - <<'EOF'
-          import json, sys
+          import json
           from jsonschema import Draft202012Validator
           with open("contracts/forge_contracts.json") as f:
-              data = json.load(f)
-          Draft202012Validator.check_schema(data)
-          print("✅ forge_contracts.json is a valid JSON Schema Draft 2020-12")
+              schema = json.load(f)
+          Draft202012Validator.check_schema(schema)
+          print("✅ forge_contracts.json is a valid Draft 2020-12 schema")
+          EOF
+
+      - name: Validate forge_manifest.json against forge_contracts.json
+        run: |
+          python3 - <<'EOF'
+          import json
+          from jsonschema import validate, ValidationError
+          with open("contracts/forge_contracts.json") as f:
+              schema = json.load(f)
+          with open("forge_manifest.json") as f:
+              manifest = json.load(f)
+          try:
+              validate(instance=manifest, schema=schema)
+              print("✅ forge_manifest.json is valid against forge_contracts.json")
+          except ValidationError as e:
+              print("❌ forge_manifest.json does not match schema")
+              print(e)
+              exit(1)
           EOF
