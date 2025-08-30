@@ -1,12 +1,14 @@
 import os
 import logging
 from typing import List
+from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
-from pydantic import Field, validator  # Correct import location
+from pydantic import Field, validator
 
-# Load .env if available
-load_dotenv()
+# Load .env from the correct location
+env_path = Path("forge-service") / ".env"
+load_dotenv(env_path)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,6 @@ class Settings(BaseSettings):
     enable_legacy: bool = Field(default=True, env="FORGE_ENABLE_LEGACY")
 
     class Config:
-        env_file = ".env"
         env_file_encoding = "utf-8"
 
     @validator("cors_origins", pre=True)
