@@ -1,4 +1,4 @@
-# ⚒️ The Forge Project ⚒️
+# 🛠️ The Forge Project 🛠️
 
 > **Generate optimised, production-ready prompt packages for Stable Diffusion and ComfyUI using custom Forge GPT/API**
 
@@ -50,7 +50,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 - **🖼️ Image Analysis**: Provides detailed descriptions and captions for any image
 - **⚙️ Smart Settings**: Automatically recommends optimal model settings, samplers, and parameters
 - **📦 Resource Management**: Validates and suggests the best models, LoRAs, and checkpoints
-- **🔧 Workflow Integration**: Creates ready-to-use packages for ComfyUI and other AI tools
+- **🛠️ Workflow Integration**: Creates ready-to-use packages for ComfyUI and other AI tools
 
 ---
 
@@ -84,7 +84,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 
 ### Contributing
 
-*I welcome contributions to the Forge Project!*
+*I welcome contributions to the Forge Project!* 
 - If you have any ideas or suggestions for improvement, please don't hesitate to contact me below.
 
 ### License
@@ -101,7 +101,7 @@ AI art workflows are fragmented across dozens of tools and platforms. Prompts, c
 
 ### The Solution: AI Optimised Prompt Packages! ✅
 
-**Prompt Packages are synchronised, structured blueprints** that eliminate fragmentation. Each package:**
+💥**Prompt Packages are synchronised, structured blueprints** that eliminate fragmentation. Each package:** 
 
 - **Ties directly** to exact ComfyUI workflows (text-to-image, text-to-video, image-to-video)
 - **Optimises every parameter** - checkpoints, samplers, schedulers, resolutions, LoRAs, seeds
