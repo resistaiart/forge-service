@@ -1,6 +1,6 @@
 # ⚒️ The Forge Project ⚒️
 
-> **Generate optimised, production-ready prompt packages for Stable Diffusion and ComfyUI using the Forge GPT/API**
+> **Generate optimised, production-ready prompt packages for Stable Diffusion and ComfyUI using custom Forge GPT/API**
 
 ## Overview
 
