@@ -10,15 +10,13 @@
 
 > *"I am The Forge Project. My mission is simple: I do not render images or videos. I engineer the inputs that ensure rendering succeeds."*
 
-### The Problem 🤔
-
+## ⚠️ The Problem with AI Image/Video creation today..
 AI image/video workflows are fragmented across dozens of tools and platforms. Prompts, captions, checkpoints, LoRAs, configs, and workflow graphs are scattered everywhere. This fragmentation wastes creative cycles and kills momentum.
 
-### The Solution: AI Optimised Prompt Packages! ✅
+### The Solution: AI Optimised Prompt Packages ✅
 
-💥**These are synchronised, structured blueprints** that eliminate prompt fragmentation! 
-
-**Each Optimised Prompt Package:** 
+**These are synchronised, structured blueprints** that eliminate prompt fragmentation
+Each Optimised Prompt Package:
 - **Ties directly** to exact ComfyUI workflows (text-to-image, text-to-video, image-to-video, etc)
 - **Optimises every parameter** - checkpoints, samplers, schedulers, resolutions, LoRAs, seeds
 - **Is versioned and documented** for quality, speed, and fidelity
@@ -26,7 +24,6 @@ AI image/video workflows are fragmented across dozens of tools and platforms. Pr
 - **Remains auditable, reusable, and scalable**
 
 ## ✨ What Does The Forge Do?
-
 **The Forge GPT takes your creative ideas and turns them into engineered specifications that Comfyui understand perfectly**
 - **🎯 Prompt Optimisation**: Transforms basic prompts into highly detailed, weighted instructions
 - **🖼️ Image Analysis**: Provides detailed descriptions and captions for any image
