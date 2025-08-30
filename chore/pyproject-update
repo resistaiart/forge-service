@@ -1,0 +1,14 @@
+[tool.black]
+line-length = 100
+target-version = ['py311']
+skip-string-normalization = false
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[project]
+name = "forge-service"
+description = "AI workflow and prompt orchestration engine"
+version = "0.1.0"
+requires-python = ">=3.11"
