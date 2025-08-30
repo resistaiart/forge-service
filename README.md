@@ -62,6 +62,7 @@ Each Optimised Prompt Package:
 - Resolution
 - Aspect Ratio
 - Content Preferences
+- And much more
 These profiles are stored and used to adapt the settings for each generation request, ensuring personalised output.
 
 ## 🔎 Diagnostics
