@@ -1,14 +1,28 @@
-[tool.black]
-line-length = 100
-target-version = ['py311']
-skip-string-normalization = false
+#!/bin/bash
+# Auto-update pyproject.toml + requirements using pip-tools
+# Usage: ./chore/pyproject-update
 
-[tool.isort]
-profile = "black"
-line_length = 100
+set -euo pipefail
 
-[project]
-name = "forge-service"
-description = "AI workflow and prompt orchestration engine"
-version = "0.1.0"
-requires-python = ">=3.11"
+if ! command -v pip-compile &> /dev/null; then
+  echo "❌ pip-compile not found. Install with: pip install pip-tools"
+  exit 1
+fi
+
+if [ ! -f "pyproject.toml" ]; then
+  echo "❌ pyproject.toml not found in repo root."
+  exit 1
+fi
+
+if [ ! -f "requirements.in" ]; then
+  echo "❌ requirements.in missing. Create it to define base dependencies."
+  exit 1
+fi
+
+echo "🔨 Updating requirements.txt from requirements.in..."
+pip-compile requirements.in --resolver=backtracking --upgrade
+
+echo "🔨 Syncing installed packages to match requirements.txt..."
+pip-sync requirements.txt
+
+echo "✅ pyproject.toml and requirements synced with requirements.txt"
