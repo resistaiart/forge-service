@@ -1,17 +1,35 @@
-# Ignore env and local config
+# =========================
+# Forge Service .gitignore
+# =========================
+
+# Environment configs
 .env
 *.env
 
 # Python artifacts
 __pycache__/
 *.pyc
-
-# Logs
+*.pyo
+*.pyd
 *.log
 
-# IDE/editor
-.vscode/
-.idea/
+# Virtual environments
+venv/
+.env/
+.venv/
 
 # OS files
 .DS_Store
+Thumbs.db
+
+# IDE/editor configs
+.vscode/
+.idea/
+*.swp
+
+# Node/npm (if ever used)
+node_modules/
+npm-debug.log*
+
+# System-specific
+forge_manifest.json
