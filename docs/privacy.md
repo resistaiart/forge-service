@@ -2,7 +2,7 @@
 
 _Last updated: August 28, 2025_
 
-The Forge Project ("we", "our", or "us") provides tooling that helps users generate structured prompt packages for ComfyUI through integration with the Forge API hosted on Railway. This Privacy Policy explains how we handle user data.
+The Forge Project ("we", "our" or "us") provides tooling that helps users generate structured prompt packages for ComfyUI through integration with the Forge API hosted on Railway. This Privacy Policy explains how we handle user data.
 
 ---
 
@@ -16,16 +16,17 @@ We **do not** collect personally identifiable information (PII) unless you expli
 ---
 
 ## 2. How We Use Information
-- To generate, optimize, and return reproducible prompt packages for use in ComfyUI.
+- To generate, optimise, and return reproducible prompt packages for use in ComfyUI.
 - To maintain service reliability and improve system performance.
 - To enforce safety and compliance rules (e.g., blocking non-consensual or minor-related content).
+- To support reproducibility: audit logs may be generated for debugging and compliance.
 
 ---
 
 ## 3. Data Storage & Retention
 - User inputs are processed in memory and transmitted securely to our Forge API.
 - We do not sell, rent, or share your data with third parties.
-- Logs may be temporarily stored for debugging and performance monitoring but are purged regularly.
+- Logs may be temporarily stored for debugging and performance monitoring but are purged **within 7 days**.
 
 ---
 
@@ -58,5 +59,4 @@ We may update this Privacy Policy periodically. Updates will be published to thi
 ## 8. Contact
 If you have questions about this Privacy Policy or data handling, please contact the project creator:
 
-**@ResistAiArt** — on [X (Twitter)](https://twitter.com/ResistAiArt)
-
+**@ResistAiArt** → on [X (Twitter)](https://twitter.com/ResistAiArt)
