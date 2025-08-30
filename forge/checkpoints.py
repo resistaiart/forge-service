@@ -32,7 +32,6 @@ def suggest_checkpoints(
     Suggest appropriate model checkpoints based on prompt and goal.
     Returns a list of recommended checkpoint configurations.
     """
-    # Default Forge checkpoints
     forge_checkpoints = [
         {
             "name": "forge-base-v1.safetensors",
@@ -66,16 +65,16 @@ def suggest_checkpoints(
         },
     ]
 
-    # If a specific checkpoint is requested, prioritize it
+    # Specific checkpoint requested → prioritise
     if preferred_checkpoint:
         for checkpoint in forge_checkpoints:
             if checkpoint["name"] == preferred_checkpoint:
-                checkpoint["priority"] = 0  # Highest priority
+                checkpoint["priority"] = 0
                 return [checkpoint] + [
                     c for c in forge_checkpoints if c["name"] != preferred_checkpoint
                 ]
 
-    # Sort by priority, relevance to goal, and name (for stable ordering)
+    # Sort by priority → then relevance to goal → then name
     sorted_checkpoints = sorted(
         forge_checkpoints,
         key=lambda x: (
@@ -84,7 +83,6 @@ def suggest_checkpoints(
             x["name"],
         ),
     )
-
     return sorted_checkpoints
 
 
@@ -98,8 +96,8 @@ def get_checkpoint_config(checkpoint_name: str) -> Dict[str, Any]:
         if checkpoint["name"] == checkpoint_name:
             return checkpoint
 
-    # Return default configuration if not found
-    logger.warning(f"Checkpoint {checkpoint_name} not found. Using default config.")
+    # Unknown checkpoint → return fallback
+    logger.warning(f"Checkpoint {checkpoint_name} not found. Returning unverified config.")
     return {
         "name": checkpoint_name,
         "source": CheckpointSource.LOCAL.value,
@@ -109,56 +107,43 @@ def get_checkpoint_config(checkpoint_name: str) -> Dict[str, Any]:
         "default_cfg": 7.5,
         "default_steps": 28,
         "priority": 2,
+        "status": "unverified"
     }
 
 
-def fetch_civitai_metadata(model_id: str) -> Optional[Dict[str, Any]]:
+def fetch_civitai_metadata(model_id: str) -> Dict[str, Any]:
     """
     Fetch metadata from CivitAI API for a specific model.
     Currently not implemented.
     """
-    logger.info(
-        f"fetch_civitai_metadata called for model_id={model_id}, but this is not implemented yet."
-    )
-    return None
+    logger.info(f"fetch_civitai_metadata called for model_id={model_id}, but this is not implemented yet.")
+    return {"status": "not_implemented", "model_id": model_id}
 
 
 def enhance_package_with_checkpoints(package: Dict[str, Any]) -> Dict[str, Any]:
     """
     Enhance a prompt package with checkpoint-specific optimizations.
     """
-    checkpoint_name = package.get("settings", {}).get(
-        "checkpoint", "forge-base-v1.safetensors"
-    )
+    checkpoint_name = package.get("settings", {}).get("checkpoint", "forge-base-v1.safetensors")
     checkpoint_config = get_checkpoint_config(checkpoint_name)
 
-    # Ensure settings dict exists
-    if "settings" not in package:
-        package["settings"] = {}
+    package.setdefault("settings", {})
 
-    package["settings"].update(
-        {
-            "checkpoint": checkpoint_name,
-            "cfg_scale": checkpoint_config.get("default_cfg", 7.5),
-            "steps": checkpoint_config.get("default_steps", 28),
-            "resolution": checkpoint_config.get("resolution", "832x1216"),
-        }
-    )
+    # Preserve existing overrides if present
+    package["settings"].setdefault("checkpoint", checkpoint_name)
+    package["settings"].setdefault("cfg_scale", checkpoint_config.get("default_cfg", 7.5))
+    package["settings"].setdefault("steps", checkpoint_config.get("default_steps", 28))
+    package["settings"].setdefault("resolution", checkpoint_config.get("resolution", "832x1216"))
 
-    # Add checkpoint metadata to package
     package["checkpoint_metadata"] = checkpoint_config
-
     return package
 
 
-# Example usage
 if __name__ == "__main__":
-    # Test checkpoint suggestions
     suggestions = suggest_checkpoints(goal="t2v")
-    print("Checkpoint suggestions for T2V:")
+    logger.info("Checkpoint suggestions for T2V:")
     for checkpoint in suggestions:
-        print(f"  - {checkpoint['name']}: {checkpoint['recommended_for']}")
+        logger.info(f"  - {checkpoint['name']}: {checkpoint['recommended_for']}")
 
-    # Test specific checkpoint config
     config = get_checkpoint_config("forge-animate-v1.safetensors")
-    print(f"\nConfig for forge-animate-v1: {config}")
+    logger.info(f"Config for forge-animate-v1: {config}")
