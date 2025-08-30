@@ -141,7 +141,7 @@ AI art workflows are fragmented across dozens of tools and platforms. Prompts, c
 - **Records what changed** and why it changed
 - **Remains auditable, reusable, and scalable**
 
-### Technical Architecture
+### Technical Architecture 🤖
 
 Built with modern Python tools:
 - **FastAPI** - High-performance web framework
