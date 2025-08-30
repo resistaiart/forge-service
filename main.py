@@ -78,7 +78,7 @@ class StandardResponse(BaseModel):
 
 
 # =====================
-# ROUTES - SEALED WORKSHOP (NEW)
+# ROUTES - SEALED WORKSHOP
 # =====================
 @app.post("/v2/optimise", response_model=StandardResponse)
 async def optimise_v2(request: OptimiseRequest):
@@ -184,7 +184,7 @@ async def analyse(request: AnalyseRequest):
 
 
 # =====================
-# HEALTH & UTILITY ENDPOINTS
+# HEALTH & UTILITY
 # =====================
 @app.get("/health", response_model=StandardResponse)
 async def health():
@@ -219,7 +219,7 @@ async def serve_manifest():
 
 
 # =====================
-# ERROR FALLBACK
+# ERROR HANDLER
 # =====================
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
