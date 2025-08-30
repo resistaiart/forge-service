@@ -1,4 +1,4 @@
-name: Dependency Check
+name: Dependency Safety Check
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  dependency-check:
+  dependency-safety:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,5 +22,5 @@ jobs:
       - name: Install pip-tools
         run: pip install pip-tools
 
-      - name: Run dependency sanity check
+      - name: Run dependency safety check
         run: python check_requirements.py
