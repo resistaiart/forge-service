@@ -87,7 +87,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 ```
 
 ### Configuration
----
+
 Forge Service allows for deep customization through user profiles, which store preferences such as:
 - ** Preferred Sampler
 - ** Resolution
@@ -101,7 +101,7 @@ The service provides detailed diagnostics explaining optimization choices, such 
 - ** Sampler choice (e.g., Euler vs. DPM)
 - ** Resolution (e.g., 832x1216 for general use, or 1024x1024 for upscaling)
 - ** Steps (higher steps = higher quality, but slower generation)
----
+
 Diagnostics also include alternative options for each setting, helping users understand how to tweak their settings for different outcomes.
 
 ### Safety Scrubbing
