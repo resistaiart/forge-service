@@ -7,6 +7,7 @@
     "OptimiseRequest": {
       "type": "object",
       "required": ["package_goal", "prompt"],
+      "additionalProperties": false,
       "properties": {
         "package_goal": {
           "type": "string",
@@ -15,7 +16,8 @@
         },
         "prompt": {
           "type": "string",
-          "description": "User input prompt"
+          "description": "User input prompt",
+          "minLength": 1
         },
         "resources": {
           "type": "array",
@@ -36,6 +38,7 @@
     "StandardResponse": {
       "type": "object",
       "required": ["outcome"],
+      "additionalProperties": false,
       "properties": {
         "outcome": {
           "type": "string",
@@ -63,22 +66,25 @@
         "menus",
         "package_goal"
       ],
+      "additionalProperties": false,
       "properties": {
         "package_version": { "type": "string" },
         "positive": { "type": "string" },
         "negative": { "type": "string" },
         "config": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "sampler": { "type": "string" },
-            "steps": { "type": "integer" },
-            "cfg": { "type": "number" },
+            "steps": { "type": "integer", "minimum": 1, "maximum": 100 },
+            "cfg": { "type": "number", "minimum": 1.0, "maximum": 20.0 },
             "resolution": { "type": "string" },
             "seed": { "type": "integer" }
           }
         },
         "workflow_patch": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "nodes": {
               "type": "array",
@@ -88,15 +94,20 @@
                   "op": { "type": "string" },
                   "node": { "type": "string" },
                   "params": { "type": "object" }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
         },
         "safety": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
-            "nsfw": { "type": "string" },
+            "nsfw": {
+              "type": "string",
+              "enum": ["consensual only", "blocked"]
+            },
             "resources": { "type": "object" }
           }
         },
@@ -130,10 +141,12 @@
         },
         "timestamp": {
           "type": "string",
+          "format": "date-time",
           "description": "Build timestamp in ISO 8601"
         },
         "id": {
           "type": "string",
+          "format": "uuid",
           "description": "Unique package identifier"
         },
         "build_time_seconds": {
