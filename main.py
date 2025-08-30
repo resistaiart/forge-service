@@ -1,4 +1,3 @@
-# main.py
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,13 +9,13 @@ import logging
 import os
 
 # Import existing modules
-from forge_prompts import optimise_prompt_package
-from forge_image_analysis import analyse_image, analyse_sealed   # 🔥 added analyse_sealed
+from forge.prompts import optimise_prompt_package  # Corrected import path
+from forge.image_analysis import analyse_image, analyse_sealed   # 🔥 added analyse_sealed
 from forge.workflows import optimise_i2i_package, optimise_t2v_package, optimise_i2v_package  # ✅ amended import
 
 # Import new sealed workshop orchestration
 from forge.optimizer import optimise_sealed
-from forge_public_interface import PackageGoal
+from forge.public_interface import PackageGoal  # Corrected import path
 
 # =====================
 # SETTINGS
@@ -73,7 +72,7 @@ async def optimise_v2(request: OptimiseRequest):
     try:
         logger.info(f"Sealed workshop request: {request.package_goal}")
         request_dict = request.dict()
-        result = await run_in_threadpool(optimize_sealed, request_dict)
+        result = await run_in_threadpool(optimise_sealed, request_dict)
         return {"outcome": "success", "result": result}
     except ValueError as e:
         if "Content violation" in str(e):
