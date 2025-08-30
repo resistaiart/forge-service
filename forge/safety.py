@@ -7,17 +7,15 @@ BLOCKED_CONTENT = ["minors", "underage", "non-consensual", "sexual violence"]
 YOUTH_CODED_TOKENS = {
     "misty": "adult cosplayer (age 21+)",
     "jessie": "adult character (age 21+)",
-    "pokemon": "cosplay creatures (fictional, age 21+)"
+    "pokemon": "cosplay creatures (fictional, age 21+)",
 }
 
 def safety_scrub(prompt: str, allow_nsfw: bool = False) -> str:
     """
     Scrub user prompt for disallowed or unsafe content.
-    
-    Rules:
-    - Always blocks absolute banned content (minors, underage, non-consensual, sexual violence).
-    - Replaces youth-coded tokens with explicit adult-safe alternatives.
-    - NSFW terms are blocked unless allow_nsfw=True (18+ mode).
+    - Blocks absolute banned content.
+    - Replaces youth-coded tokens with adult-safe alternatives.
+    - Blocks NSFW unless allow_nsfw=True.
     """
     if not isinstance(prompt, str):
         raise ValueError("Prompt must be a string")
@@ -36,7 +34,17 @@ def safety_scrub(prompt: str, allow_nsfw: bool = False) -> str:
 
     # handle NSFW policy
     if not allow_nsfw:
-        if "nsfw" in text or "explicit" in text or "porn" in text:
+        if any(word in text for word in ["nsfw", "explicit", "porn"]):
             raise ValueError("Content violation: nsfw not permitted in current mode")
 
     return cleaned_prompt.strip()
+
+
+def build_safety(resources: dict, nsfw_allowed: bool = False) -> dict:
+    """
+    Construct a safety metadata block for a Forge package.
+    """
+    return {
+        "nsfw": "consensual only" if nsfw_allowed else "blocked",
+        "resources": resources or {},
+    }
