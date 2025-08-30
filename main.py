@@ -21,7 +21,7 @@ from forge.optimizer import optimise_sealed
 from forge.public_interface import PackageGoal
 
 # Routes
-from routes import contracts
+from routes import contracts, manifest
 
 # =====================
 # SETTINGS
@@ -41,6 +41,7 @@ app = FastAPI(title=settings.app_name, version="2.0")
 
 # Register routes
 app.include_router(contracts.router)
+app.include_router(manifest.router)
 
 # CORS middleware
 app.add_middleware(
@@ -208,21 +209,10 @@ async def version():
             "analysis": "/analyse",
             "health": "/health",
             "manifest": "/manifest",
+            "manifest_full": "/manifest/full",
             "contracts": "/contracts",
         },
     }
-
-
-@app.get("/manifest", response_class=FileResponse)
-async def serve_manifest():
-    """Serve the full Forge manifest as raw JSON"""
-    try:
-        return FileResponse("forge_manifest.json", media_type="application/json")
-    except FileNotFoundError:
-        return JSONResponse(
-            status_code=404,
-            content={"outcome": "error", "message": "manifest not found"},
-        )
 
 
 # =====================
