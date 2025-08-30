@@ -1,9 +1,9 @@
 [flake8]
-# Maximum allowed line length
+# Max line length (Black compatibility)
 max-line-length = 100
 
-# Ignore specific rules that conflict with Black formatting
+# Ignore rules to align with Black formatting
 extend-ignore = E203, W503
 
-# Exclude common non-code folders
-exclude = .git, __pycache__, .venv, env, dist, node_modules
+# Exclude common non-source folders and cache dirs
+exclude = .git, __pycache__, .venv, venv, env, dist, node_modules
