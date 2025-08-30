@@ -101,12 +101,13 @@ AI art workflows are fragmented across dozens of tools and platforms. Prompts, c
 
 ### The Solution: AI Optimised Prompt Packages! ✅
 
-💥**Prompt Packages are synchronised, structured blueprints** that eliminate fragmentation. Each package:** 
+💥**Prompt Packages are synchronised, structured blueprints** that eliminate fragmentation. 
 
-- **Ties directly** to exact ComfyUI workflows (text-to-image, text-to-video, image-to-video)
+**Each Optimised Prompt Package:** 
+- **Ties directly** to exact ComfyUI workflows (text-to-image, text-to-video, image-to-video, etc)
 - **Optimises every parameter** - checkpoints, samplers, schedulers, resolutions, LoRAs, seeds
 - **Is versioned and documented** for quality, speed, and fidelity
-- **Records what changed** and why it changed
+- **Records what changed** and why it changed!
 - **Remains auditable, reusable, and scalable**
 
 ### Technical Architecture 🤖
