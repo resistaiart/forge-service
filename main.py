@@ -15,7 +15,7 @@ from forge_image_analysis import analyse_image, analyse_sealed   # 🔥 added an
 from forge_workflows import optimise_i2i_package, optimise_t2v_package, optimise_i2v_package
 
 # Import new sealed workshop orchestration
-from forge_optimizer import optimize_sealed
+from forge.optimizer import optimise_sealed
 from forge_public_interface import PackageGoal
 
 # =====================
