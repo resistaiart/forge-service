@@ -1,4 +1,4 @@
-# forge_captions.py
+# forge/captions.py
 import re
 import random
 import logging
