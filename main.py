@@ -1,8 +1,8 @@
+# main.py
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
-from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Literal
 import uvicorn
 import logging
@@ -13,27 +13,17 @@ from forge.image_analysis import analyse_image, analyse_sealed
 from forge.workflows import optimise_i2i_package, optimise_t2v_package
 from forge.optimizer import optimise_sealed
 from forge.public_interface import PackageGoal
-from forge.config import ENDPOINTS  # ✅ Central config
+from forge.schemas import OptimiseRequest, AnalyseRequest, StandardResponse
+from forge.config import settings, ENDPOINTS
 
 # =====================
-# SETTINGS
+# INIT
 # =====================
-class Settings(BaseModel):
-    app_name: str = "Forge Service API"
-    cors_origins: str = os.getenv("CORS_ORIGINS", "*")
-    debug: bool = os.getenv("DEBUG", "False").lower() == "true"
-    enable_legacy: bool = os.getenv("FORGE_ENABLE_LEGACY", "true").lower() == "true"
-
-settings = Settings()
-
-# =====================
-# APP INIT
-# =====================
-app = FastAPI(title=settings.app_name, version="2.0")
+app = FastAPI(title=settings.app_name, version=settings.version)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins.split(","),
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,25 +31,6 @@ app.add_middleware(
 
 logging.basicConfig(level=logging.INFO, format="[Forge] %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
-
-# =====================
-# MODELS
-# =====================
-class OptimiseRequest(BaseModel):
-    package_goal: PackageGoal
-    prompt: str
-    resources: Optional[List[dict]] = Field(default_factory=list)
-    caption: Optional[str] = ""
-    custom_weights: Optional[Dict[str, float]] = None
-
-class AnalyseRequest(BaseModel):
-    image_url: str
-    mode: Literal["basic", "detailed", "tags"] = "basic"
-
-class StandardResponse(BaseModel):
-    outcome: Literal["success", "error"]
-    result: Optional[dict] = None
-    message: Optional[str] = None
 
 # =====================
 # SEALED ENDPOINTS
@@ -90,9 +61,10 @@ async def analyse_v2(request: AnalyseRequest):
         return {"outcome": "error", "message": "Internal analysis error"}
 
 # =====================
-# LEGACY ROUTES (Optional)
+# LEGACY ROUTES
 # =====================
 if settings.enable_legacy:
+
     @app.post("/optimise", response_model=StandardResponse)
     @app.post("/t2i", response_model=StandardResponse)
     @app.post("/t2v", response_model=StandardResponse)
@@ -156,7 +128,7 @@ if settings.enable_legacy:
             return {"outcome": "error", "message": str(e)}
 
 # =====================
-# HEALTH & MANIFEST
+# SYSTEM
 # =====================
 @app.get("/health", response_model=StandardResponse)
 async def health():
@@ -164,22 +136,16 @@ async def health():
 
 @app.get("/version")
 async def version():
-    return {"version": "2.0", "service": "The Forge API", "endpoints": ENDPOINTS}
+    return {"version": settings.version, "service": settings.app_name, "endpoints": ENDPOINTS}
 
 @app.get("/manifest", response_class=FileResponse)
 async def serve_manifest():
     return FileResponse("forge_manifest.json", media_type="application/json")
 
-# =====================
-# GLOBAL ERROR HANDLER
-# =====================
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled error: {str(exc)}")
     return JSONResponse(status_code=500, content={"outcome": "error", "message": "internal failure"})
 
-# =====================
-# RUN
-# =====================
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
+    uvicorn.run("main:app", host="0.0.0.0", port=settings.port)
