@@ -127,7 +127,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 
 > *"I am The Forge Project. My mission is simple: I do not render images or videos. I engineer the inputs that ensure rendering succeeds."*
 
-### The Problem
+### The Problem 🤔
 
 AI art workflows are fragmented across dozens of tools and platforms. Prompts, captions, checkpoints, LoRAs, configs, and workflow graphs are scattered everywhere. This fragmentation wastes creative cycles and kills momentum.
 
