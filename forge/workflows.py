@@ -1,9 +1,9 @@
-# forge_workflows.py
+
 import random
 from typing import Dict, List, Optional, Any
 
 # Absolute imports from forge package
-from forge.prompts import clean_prompt, analyze_prompt_intent, weight_keywords
+from forge.prompts import clean_prompt, analyze_prompt_style, weight_keywords
 
 # Video-specific configuration
 VIDEO_MODELS = {
@@ -20,9 +20,8 @@ def optimise_i2i_package(
     resources: Optional[List[str]] = None,
     caption: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Optimize a package for Image-to-Image generation."""
     base_prompt = clean_prompt(prompt)
-    intent = analyze_prompt_intent(base_prompt)
+    intent = analyze_prompt_style(base_prompt)
     weighted_prompt = weight_keywords(base_prompt, intent)
 
     settings = _get_base_settings("i2i", intent)
@@ -59,10 +58,9 @@ def optimise_t2v_package(
     resources: Optional[List[str]] = None,
     caption: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Optimize a package for Text-to-Video generation."""
     base_prompt = clean_prompt(prompt)
-    intent = analyze_prompt_intent(base_prompt)
-    weighted_prompt = _adapt_prompt_for_video(base_prompt, intent)
+    intent = analyze_prompt_style(base_prompt)
+    weighted_prompt = _adapt_prompt_for_video(base_prompt, intent, motion_intensity)
 
     settings = _get_video_settings(intent, num_frames, fps, motion_intensity)
     negative_prompt = _get_video_negative_prompt(intent)
@@ -97,10 +95,9 @@ def optimise_i2v_package(
     resources: Optional[List[str]] = None,
     caption: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Optimize a package for Image-to-Video generation."""
     base_prompt = clean_prompt(prompt)
-    intent = analyze_prompt_intent(base_prompt)
-    weighted_prompt = _adapt_prompt_for_video(base_prompt, intent)
+    intent = analyze_prompt_style(base_prompt)
+    weighted_prompt = _adapt_prompt_for_video(base_prompt, intent, motion_intensity)
 
     settings = _get_video_settings(intent, num_frames, fps, motion_intensity)
     settings["denoise"] = max(0.1, min(1.0, denoise_strength))
@@ -132,10 +129,9 @@ def optimise_i2v_package(
     }
 
 
-# --- Helper functions for video processing ---
+# --- Helper functions ---
 
-def _adapt_prompt_for_video(prompt: str, intent: Dict[str, str]) -> str:
-    """Adapt a prompt for video generation by adding motion cues."""
+def _adapt_prompt_for_video(prompt: str, intent: Dict[str, str], intensity: str = "medium") -> str:
     motion_keywords = {
         "low": ["subtle movement", "gentle motion", "slow pan"],
         "medium": ["dynamic", "moving", "panning", "animated"],
@@ -149,7 +145,7 @@ def _adapt_prompt_for_video(prompt: str, intent: Dict[str, str]) -> str:
     has_motion = any(word in prompt_lower for word in motion_words)
 
     if not has_motion:
-        weighted_prompt = f"{weighted_prompt}, {motion_keywords['medium'][0]}"
+        weighted_prompt = f"{weighted_prompt}, {motion_keywords[intensity][0]}"
 
     return weighted_prompt
 
@@ -196,8 +192,6 @@ def _generate_video_diagnostics(settings: Dict[str, Any], intent: Dict[str, str]
         "detected_mood": intent.get("mood", "unspecified"),
     }
 
-
-# --- Shared helpers ---
 
 def _get_base_settings(goal: str, intent: Dict[str, str]) -> Dict[str, Any]:
     base = {
