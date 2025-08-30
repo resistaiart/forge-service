@@ -9,7 +9,7 @@ import uvicorn
 import logging
 import os
 
-# Forge modules (new package imports)
+# Forge modules
 from forge.prompts import optimise_prompt_package
 from forge.image_analysis import analyse_image, analyse_sealed
 from forge.workflows import (
@@ -19,6 +19,9 @@ from forge.workflows import (
 )
 from forge.optimizer import optimise_sealed
 from forge.public_interface import PackageGoal
+
+# Routes
+from routes import contracts
 
 # =====================
 # SETTINGS
@@ -35,6 +38,9 @@ settings = Settings()
 # APP INIT
 # =====================
 app = FastAPI(title=settings.app_name, version="2.0")
+
+# Register routes
+app.include_router(contracts.router)
 
 # CORS middleware
 app.add_middleware(
@@ -202,6 +208,7 @@ async def version():
             "analysis": "/analyse",
             "health": "/health",
             "manifest": "/manifest",
+            "contracts": "/contracts",
         },
     }
 
