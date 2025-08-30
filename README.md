@@ -155,7 +155,7 @@ Key modules include `forge_prompts.py`, `forge_image_analysis.py`, `forge_resour
 
 ## 📞 Contact
 
-- **Contact**: [Resist](https://x.com/ResistAiArt) over on 𝕏
+- **Contact**: [Resist](https://x.com/ResistAiArt) on 𝕏
 
 ---
 
