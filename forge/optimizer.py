@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 from forge.safety import safety_scrub
 from forge.prompts import build_prompts, analyze_prompt_style
-from forge.settings import build_settings
+from forge.config import settings   # ✅ using config instead of missing settings.py
 from forge.resources import validate_resources
 from forge.captions import generate_captions
 from forge.comfy_patches import generate_workflow_patch
@@ -18,34 +18,40 @@ def optimise_sealed(request: Dict[str, Any]) -> Dict[str, Any]:
     """🔒 SEALED: Orchestrates Forge modules to produce a sealed prompt package."""
 
     try:
-        # 1. Safety filtering
-        allow_nsfw = False
-        if isinstance(request.get("profile"), dict):
-            allow_nsfw = request["profile"].get("content_preferences", {}).get("allow_nsfw", False)
+        # 1. Profile loading
+        user_profile = request.get("profile") or load_profile("default")
 
+        # 2. Safety filtering
+        allow_nsfw = user_profile.get("content_preferences", {}).get("allow_nsfw", False)
         cleaned_prompt = safety_scrub(request.get("prompt", ""), allow_nsfw=allow_nsfw)
         logger.debug(f"Prompt scrubbed → {cleaned_prompt[:80]}...")
 
-        # 2. Intent analysis
+        # 3. Intent analysis
         intent = analyze_prompt_style(cleaned_prompt)
         logger.debug(f"Prompt intent → {intent}")
 
-        # 3. Prompt generation
-        positive, negative = build_prompts(cleaned_prompt, intent)
+        # 4. Prompt generation
+        positive, negative = build_prompts(cleaned_prompt, user_profile)
 
-        # 4. Config generation
-        base_settings = build_settings(request["package_goal"], intent)
+        # 5. Config generation + adapt via profile
+        base_settings = adapt_settings(
+            build_settings(request["package_goal"], intent), 
+            user_profile
+        )
 
-        # 5. Resource filtering
+        # 6. Resource filtering
         resources = validate_resources(request.get("resources", []))
 
-        # 6. Captions
-        captions = generate_captions(cleaned_prompt, request.get("caption"))
+        # 7. Captions + adapt via profile
+        captions = adapt_captions(
+            generate_captions(cleaned_prompt, request.get("caption"), user_profile),
+            user_profile
+        )
 
-        # 7. Workflow patch
+        # 8. Workflow patch
         workflow_patch = generate_workflow_patch(base_settings)
 
-        # 8. Final package
+        # 9. Final package
         return {
             "package_version": "v1.0",
             "positive": positive,
@@ -60,6 +66,7 @@ def optimise_sealed(request: Dict[str, Any]) -> Dict[str, Any]:
             "menus": _get_menus(request["package_goal"]),
             "package_goal": request["package_goal"],
             "captions": captions,
+            "profile_used": user_profile.get("metadata", {}),
         }
 
     except Exception as e:
