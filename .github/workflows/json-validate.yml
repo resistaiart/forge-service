@@ -1,0 +1,40 @@
+name: Validate JSON files
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install jq and Python deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          python3 -m pip install --upgrade pip
+          pip install jsonschema
+
+      - name: Validate forge_manifest.json is valid JSON
+        run: |
+          jq . forge_manifest.json > /dev/null
+
+      - name: Validate forge_contracts.json is valid JSON
+        run: |
+          jq . contracts/forge_contracts.json > /dev/null
+
+      - name: Validate forge_contracts.json against JSON Schema Draft 2020-12
+        run: |
+          python3 - <<'EOF'
+          import json, sys
+          from jsonschema import Draft202012Validator
+          with open("contracts/forge_contracts.json") as f:
+              data = json.load(f)
+          Draft202012Validator.check_schema(data)
+          print("✅ forge_contracts.json is a valid JSON Schema Draft 2020-12")
+          EOF
