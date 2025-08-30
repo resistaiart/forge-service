@@ -13,7 +13,7 @@
 ## ⚠️ The Problem with AI Image/Video creation today..
 AI image/video workflows are fragmented across dozens of tools and platforms. Prompts, captions, checkpoints, LoRAs, configs, and workflow graphs are scattered everywhere. This fragmentation wastes creative cycles and kills momentum.
 
-## ✅ The Solution: AI Optimised Prompt Packages 
+## The Solution: AI Optimised Prompt Packages 
 
 **These are synchronised, structured blueprints** that eliminate prompt fragmentation
 Each Optimised Prompt Package:
