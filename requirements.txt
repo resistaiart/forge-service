@@ -35,4 +35,4 @@ gunicorn==23.0.0
 
 # Optional: enable with pip-compile --generate-hashes
 # To audit: pip-audit -r requirements.txt
-pydantic-settings==2.11.1
+pydantic-settings>=2.8.0
