@@ -46,7 +46,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 - **Comprehensive Diagnostics**: Provides detailed explanations of the chosen settings and alternative options.
 - **Integration Support**: Easily integrates with external APIs and services.
 
-## ⚙️The Forge Core:###
+## 🔥The Forges Core:
 - **main.py**: The entry point for the FastAPI app. It defines the web server and routes for various functionalities, such as health checks, manifest routes, and sealed/legacy API routes.
 - **workflows.py**: Handles the core logic for generating and optimising images/videos based on the user's request.
 - **prompts.py**: Builds and cleans prompts, applies custom weights, and analyses the prompt style for optimised content generation.
