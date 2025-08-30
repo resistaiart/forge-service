@@ -1,0 +1,17 @@
+# Ignore env and local config
+.env
+*.env
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# IDE/editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
