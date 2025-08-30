@@ -98,4 +98,5 @@ class CivitAIIntegration(Integration):
             response.raise_for_status()
             return response.json().get("items", [])
         except Exception as e:
-            logger.error(f"CivitAI search failed:
+            logger.error(f"CivitAI search failed: {str(e)}")
+            return []
