@@ -1,4 +1,4 @@
-# main.py
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +10,7 @@ import os
 
 from forge.config import settings
 from forge.schemas import StandardResponse
+from forge.public_interface import is_valid_goal
 
 # =====================
 # INIT
@@ -41,6 +42,19 @@ app.include_router(manifest.router)
 
 from routes import health
 app.include_router(health.router)
+
+# =====================
+# ROUTES - PACKAGE GOAL VALIDATION
+# =====================
+@app.post("/validate-package-goal", response_model=StandardResponse)
+async def validate_package_goal(request: Request):
+    body = await request.json()
+    goal = body.get("package_goal")
+
+    if goal and is_valid_goal(goal):
+        return JSONResponse(status_code=200, content={"outcome": "success", "message": f"Valid goal: {goal}"})
+
+    return JSONResponse(status_code=400, content={"outcome": "error", "message": f"Invalid goal: {goal}"})
 
 # =====================
 # GLOBAL ERROR HANDLER
