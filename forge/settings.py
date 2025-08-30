@@ -1,4 +1,4 @@
-# forge_settings.py
+# forge/settings.py
 import random
 import logging
 from typing import Dict, Any, Optional
@@ -17,11 +17,13 @@ class SamplerType(Enum):
     DPM_2_A = "DPM2 a"
     DPM_PP_2S_A = "DPM++ 2S a"
 
+
 class SchedulerType(Enum):
     KARRAS = "Karras"
     SIMPLE = "Simple"
     NATIVE = "Native"
     EXPONENTIAL = "Exponential"
+
 
 class GoalType(Enum):
     T2I = "t2i"
@@ -31,8 +33,9 @@ class GoalType(Enum):
     UPSCALE = "upscale"
     INTERROGATE = "interrogate"
 
+
 # === Default settings per goal ===
-_DEFAULT_SETTINGS = {
+_DEFAULT_SETTINGS: Dict[str, Dict[str, Any]] = {
     GoalType.T2I.value: {
         "checkpoint": "forge-base-v1.safetensors",
         "sampler": SamplerType.DPM_PP_2M.value,
@@ -113,8 +116,10 @@ _DEFAULT_SETTINGS = {
     },
 }
 
+
 # === Core builders ===
-def build_settings(profile: Optional[Dict[str, Any]] = None, package_goal: str = "t2i") -> Dict[str, Any]:
+def build_settings(package_goal: str = "t2i", profile: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Build generation settings for a given goal, applying profile overrides."""
     if package_goal not in _DEFAULT_SETTINGS:
         logger.warning(f"Unknown goal '{package_goal}', defaulting to 't2i'")
         package_goal = GoalType.T2I.value
@@ -128,26 +133,25 @@ def build_settings(profile: Optional[Dict[str, Any]] = None, package_goal: str =
     settings["seed"] = random.randint(1, 2_147_483_647)
 
     settings = _validate_and_constrain_settings(settings, package_goal)
-    logger.info(f"Built settings for goal '{package_goal}' with seed {settings['seed']}")
+    logger.debug(f"Built settings for goal '{package_goal}' with seed {settings['seed']}")
     return settings
 
+
 def _apply_profile_settings(settings: Dict[str, Any], profile: Dict[str, Any], goal: str) -> Dict[str, Any]:
+    """Apply profile-based overrides to settings."""
     settings = settings.copy()
 
-    # Checkpoint & sampler preferences
     if profile.get("preferred_checkpoint"):
         settings["checkpoint"] = profile["preferred_checkpoint"]
     if profile.get("preferred_sampler"):
         settings["sampler"] = profile["preferred_sampler"]
 
-    # Verbosity tweaks
     verbosity = profile.get("verbosity", "normal")
     if verbosity == "verbose":
         settings["steps"] += 8
     elif verbosity == "compact":
         settings["steps"] = max(15, settings["steps"] - 5)
 
-    # Style-based boosts
     detected_style = settings.get("detected_style")
     style_boost = profile.get("style_boost", {})
     if detected_style and detected_style in style_boost:
@@ -157,10 +161,11 @@ def _apply_profile_settings(settings: Dict[str, Any], profile: Dict[str, Any], g
 
     return settings
 
+
 def _validate_and_constrain_settings(settings: Dict[str, Any], goal: str) -> Dict[str, Any]:
+    """Ensure all numeric settings fall within safe limits."""
     settings = settings.copy()
 
-    # Constrain numeric values
     constraints = {
         "steps": (10, 100),
         "cfg_scale": (1.0, 20.0),
@@ -178,23 +183,26 @@ def _validate_and_constrain_settings(settings: Dict[str, Any], goal: str) -> Dic
             else:
                 settings[param] = int(max(min_val, min(max_val, val)))
 
-    # Video-specific safeguards
     if goal in (GoalType.T2V.value, GoalType.I2V.value):
         settings["motion_bucket_id"] = max(1, min(255, settings.get("motion_bucket_id", 127)))
         settings["augmentation_level"] = max(0.0, min(1.0, settings.get("augmentation_level", 0.1)))
 
     return settings
 
+
 # === Info helpers ===
 def get_available_goals() -> list:
     return list(_DEFAULT_SETTINGS.keys())
+
 
 def get_default_settings(goal: str) -> Dict[str, Any]:
     if goal not in _DEFAULT_SETTINGS:
         raise ValueError(f"Unknown goal: {goal}. Available goals: {list(_DEFAULT_SETTINGS.keys())}")
     return _DEFAULT_SETTINGS[goal].copy()
 
+
 def explain_settings(settings: Dict[str, Any]) -> Dict[str, str]:
+    """Explain why each setting value was chosen, for transparency/debugging."""
     explanations = {}
     sampler_explanations = {
         SamplerType.DPM_PP_2M.value: "Balanced quality and speed",
@@ -205,7 +213,7 @@ def explain_settings(settings: Dict[str, Any]) -> Dict[str, str]:
     }
 
     if "sampler" in settings:
-        explanations["sampler"] = sampler_explanations.get(settings["sampler"], f"{settings['sampler']}: custom choice")
+        explanations["sampler"] = sampler_explanations.get(settings["sampler"], f"{settings['sampler']} (custom)")
 
     if "cfg_scale" in settings:
         cfg = settings["cfg_scale"]
@@ -236,6 +244,7 @@ def explain_settings(settings: Dict[str, Any]) -> Dict[str, str]:
 
     return explanations
 
+
 # === API helpers ===
 def get_defaults() -> Dict[str, str]:
     return {
@@ -243,7 +252,9 @@ def get_defaults() -> Dict[str, str]:
         "default_goal": GoalType.T2I.value,
     }
 
+
 def infer_goal_from_prompt(prompt: str) -> Dict[str, Any]:
+    """Lightweight heuristic to guess the goal from the user’s prompt."""
     p = prompt.lower()
     if any(kw in p for kw in ["video", "animation", "frames", "moving", "motion"]):
         return {"inferred_goal": GoalType.T2V.value, "confidence": 0.9, "recommendation": "Use t2v for best results"}
