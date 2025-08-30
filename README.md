@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Forge Service** is a powerful backend API service designed to provide customizable, AI-powered content generation capabilities. It supports a variety of goals, including **Text-to-Image** (T2I), **Image-to-Image** (I2I), **Text-to-Video** (T2V), and **Image Upscaling**. Built using **FastAPI**, the service handles requests related to content generation, integrates safety filters, provides detailed diagnostics, and offers a flexible workflow for generating high-quality AI-generated visuals.
+**The Forge Project** is a powerful backend API service designed to provide customizable, AI-powered content generation capabilities. It supports a variety of goals, including **Text-to-Image** (T2I), **Image-to-Image** (I2I), **Text-to-Video** (T2V), and **Image Upscaling**. Built using **FastAPI**, the service handles requests related to content generation, integrates safety filters, provides detailed diagnostics, and offers a flexible workflow for generating high-quality AI-generated visuals.
 
 ## Features
 
