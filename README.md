@@ -91,58 +91,36 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 ### Configuration
 
 Forge Service allows for deep customization through user profiles, which store preferences such as:
-
-Preferred Sampler
-
-Resolution
-
-Aspect Ratio
-
-Content Preferences (e.g., allow NSFW)
-
+- **Preferred Sampler
+- **Resolution
+- **Aspect Ratio
+- **Content Preferences (e.g., allow NSFW)
 These profiles are stored and used to adapt the settings for each generation request, ensuring personalized output.
 
 ### Diagnostics
-
 The service provides detailed diagnostics explaining optimization choices, such as:
-
-CFG scale (controls creativity vs. prompt adherence)
-
-Sampler choice (e.g., Euler vs. DPM)
-
-Resolution (e.g., 832x1216 for general use, or 1024x1024 for upscaling)
-
-Steps (higher steps = higher quality, but slower generation)
+- **CFG scale (controls creativity vs. prompt adherence)
+- **Sampler choice (e.g., Euler vs. DPM)
+- **Resolution (e.g., 832x1216 for general use, or 1024x1024 for upscaling)
+- **Steps (higher steps = higher quality, but slower generation)
 
 Diagnostics also include alternative options for each setting, helping users understand how to tweak their settings for different outcomes.
 
 ### Safety Scrubbing
-
 Safety scrubbing ensures that no harmful or disallowed content is used in the prompt. The service filters out:
-
-NSFW or explicit content
-
-Child-related terms or youth-coded tokens
-
-Other unwanted keywords such as abuse or violence
+- **NSFW or explicit content
+- **Child-related terms or youth-coded tokens
+- **Other unwanted keywords such as abuse or violence
 
 ### Integrations
-
 The Forge Service can integrate with various external systems, such as:
-
-External APIs: Can connect to platforms like HuggingFace, CivitAI, etc.
-
-Workflow Patches: Supports ComfyUI patches for user-specific workflows.
+- **External APIs: Can connect to platforms like HuggingFace, CivitAI, etc.
+- **Workflow Patches: Supports ComfyUI patches for user-specific workflows.
 
 ### Contributing
 
-We welcome contributions to Forge Service! If you have ideas or improvements, feel free to:
-
-Fork the repository.
-
-Create a new branch for your feature.
-
-Submit a pull request with a detailed explanation of the changes.
+I welcome contributions to the Forge Project!
+- **If you have any ideas or suggestions for improvement, please don't hesitate to contact me below..
 
 ### License
 
@@ -195,4 +173,4 @@ Key modules include `forge_prompts.py`, `forge_image_analysis.py`, `forge_resour
 
 ---
 
-**Created by [Resist](https://x.com/ResistAiArt)** - Engineering perfection in AI art generation.
+**Created by [Resist](https://x.com/ResistAiArt)** - Engineering Perfection in AI Art Generation.
