@@ -153,11 +153,9 @@ Key modules include `forge_prompts.py`, `forge_image_analysis.py`, `forge_resour
 
 ---
 
-## 📞 Support
+## 📞 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/forge-service/issues)
 - **Contact**: [@ResistAiArt on X](https://x.com/ResistAiArt)
-- **Documentation**: See `/docs` directory for detailed guides
 
 ---
 
