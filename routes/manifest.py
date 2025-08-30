@@ -9,7 +9,9 @@ router = APIRouter()
 
 @router.get("/manifest", response_class=FileResponse)
 async def serve_manifest():
-    """Serve the lightweight Forge runtime manifest."""
+    """
+    Serve the lightweight Forge runtime manifest (forge_manifest.json).
+    """
     manifest_path = os.path.join("forge_manifest.json")
     if not os.path.exists(manifest_path):
         return JSONResponse(
@@ -21,10 +23,14 @@ async def serve_manifest():
 
 @router.get("/manifest/full")
 async def serve_full_manifest():
-    """Serve a merged manifest (runtime manifest + contracts schema)."""
+    """
+    Serve a merged manifest: runtime manifest + contracts schema.
+    Useful for SDK generation and single-point client discovery.
+    """
     manifest_path = os.path.join("forge_manifest.json")
     contracts_path = os.path.join("contracts", "forge_contracts.json")
 
+    # Load manifest
     try:
         with open(manifest_path, "r") as f:
             manifest_data = json.load(f)
@@ -34,6 +40,7 @@ async def serve_full_manifest():
             content={"outcome": "error", "message": "manifest not found"},
         )
 
+    # Load contracts (optional, tolerate missing)
     try:
         with open(contracts_path, "r") as f:
             contracts_data = json.load(f)
