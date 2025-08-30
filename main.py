@@ -19,6 +19,7 @@ from forge.workflows import (
 )
 from forge.optimizer import optimise_sealed
 from forge.public_interface import PackageGoal
+from forge.package import build_package   # ✅ NEW import
 
 # Routes
 from routes import contracts, manifest
@@ -120,6 +121,34 @@ async def analyse_v2(request: AnalyseRequest):
 
 
 # =====================
+# ROUTES - SEALED PACKAGE BUILDER (NEW)
+# =====================
+@app.post("/v2/package", response_model=StandardResponse)
+async def build_package_v2(request: OptimiseRequest):
+    """
+    Build a full Forge Prompt Package with all components included.
+    """
+    try:
+        logger.info(f"Building package via API for goal: {request.package_goal}")
+        result = await run_in_threadpool(
+            build_package,
+            request.package_goal,
+            request.prompt,
+            request.resources,
+            request.caption,
+            "api_user",   # later: wire real user_id
+            None          # later: descriptors from /analyse
+        )
+        return {"outcome": "success", "result": result}
+    except ValueError as e:
+        logger.error(f"Invalid request for package build: {e}")
+        return {"outcome": "error", "message": str(e)}
+    except Exception as e:
+        logger.exception("Unexpected error during package build")
+        return {"outcome": "error", "message": f"internal package error: {str(e)}"}
+
+
+# =====================
 # ROUTES - LEGACY ENDPOINTS
 # =====================
 @app.post("/optimise", response_model=StandardResponse)
@@ -205,11 +234,11 @@ async def version():
         "service": "The Forge API",
         "endpoints": {
             "legacy": "/optimise, /t2i, /t2v, /optimise/i2i, /optimise/t2v",
-            "sealed_workshop": "/v2/optimise, /v2/analyse",
+            "sealed_workshop": "/v2/optimise, /v2/analyse, /v2/package",  # ✅ includes package
             "analysis": "/analyse",
             "health": "/health",
             "manifest": "/manifest",
-            "manifest_full": "/manifest/full",   # ✅ new endpoint advertised
+            "manifest_full": "/manifest/full",
             "contracts": "/contracts",
         },
     }
