@@ -1,5 +1,5 @@
-# Locked requirements for Forge API
-# Generated from requirements.in using pip-tools
+# Forge API — Primary Python Requirements
+# Compiled into requirements.txt using: pip-compile requirements.in
 
 # Core Web/API stack
 fastapi==0.111.0
@@ -33,9 +33,5 @@ psutil==5.9.8
 pyyaml==6.0.1
 gunicorn==23.0.0
 
-# Optional: Enable hash verification
-# (add --generate-hashes with pip-compile)
-
-# Audit recommended:
-# pip install pip-audit
-# pip-audit --requirement requirements.txt
+# Optional: enable with pip-compile --generate-hashes
+# To audit: pip-audit -r requirements.txt
