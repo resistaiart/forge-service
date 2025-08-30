@@ -1,5 +1,3 @@
-# forge/prompts/styling.py
-
 import random
 import logging
 from typing import Dict, List, Optional
@@ -10,11 +8,17 @@ logger = logging.getLogger(__name__)
 
 
 def analyze_prompt_style(prompt: str) -> Dict[str, float]:
+    """
+    Analyze prompt to determine stylistic influences based on known keywords.
+    Returns a score distribution across known styles.
+    """
+    styles = ["realistic", "anime", "cyberpunk", "fantasy", "painting", "scifi"]
     if not prompt:
-        return {s: 0.0 for s in ["realistic", "anime", "cyberpunk", "fantasy", "painting", "scifi"]}
-    
+        return {style: 0.0 for style in styles}
+
+    style_scores = dict.fromkeys(styles, 0)
     prompt_lower = prompt.lower()
-    style_scores = {k: 0 for k in ["realistic", "anime", "cyberpunk", "fantasy", "painting", "scifi"]}
+
     style_keywords = {
         "realistic": ["realistic", "photorealistic", "photo", "hyperrealistic"],
         "anime": ["anime", "manga", "cel-shaded", "chibi", "kawaii"],
@@ -30,7 +34,7 @@ def analyze_prompt_style(prompt: str) -> Dict[str, float]:
                 style_scores[style] += 1
 
     total = sum(style_scores.values())
-    if total:
+    if total > 0:
         for style in style_scores:
             style_scores[style] = round(style_scores[style] / total, 2)
 
@@ -38,34 +42,42 @@ def analyze_prompt_style(prompt: str) -> Dict[str, float]:
 
 
 def get_negative_prompt(additional_negatives: Optional[List[str]] = None) -> str:
-    neg = CONFIG["negative_prompt"]
+    """
+    Combine default negatives with any additional user-specified negatives.
+    """
+    base = CONFIG["negative_prompt"]
     if additional_negatives:
-        neg += ", " + ", ".join([n for n in additional_negatives if n])
-    return neg
+        extras = ", ".join(n for n in additional_negatives if n)
+        return f"{base}, {extras}"
+    return base
 
 
-def get_settings(goal: str = "t2i", style_analysis: Optional[Dict] = None) -> Dict:
+def get_settings(goal: str = "t2i", style_analysis: Optional[Dict[str, float]] = None) -> Dict:
+    """
+    Retrieve base generation settings, optionally modified by detected style.
+    """
     if goal not in CONFIG["settings"]:
-        logger.warning(f"Unknown goal '{goal}', defaulting to 't2i'")
+        logger.warning(f"Unknown generation goal '{goal}', defaulting to 't2i'")
         goal = "t2i"
 
     settings = CONFIG["settings"][goal].copy()
-    settings["seed"] = random.randint(1, 999999999)
+    settings["seed"] = random.randint(1, 999_999_999)
 
     if style_analysis:
-        dominant_style, score = max(style_analysis.items(), key=lambda x: x[1])
+        dominant_style, score = max(style_analysis.items(), key=lambda item: item[1])
         if score > 0:
-            style_adjustments = {
+            modifiers = {
                 "realistic": {"cfg_scale": -0.5, "steps": 5},
                 "anime": {"cfg_scale": 0.3, "steps": -2},
                 "cyberpunk": {"cfg_scale": 0.7, "steps": 3},
                 "fantasy": {"cfg_scale": 0.4, "steps": 2},
             }
-            if dominant_style in style_adjustments:
-                adj = style_adjustments[dominant_style]
+            if dominant_style in modifiers:
+                adj = modifiers[dominant_style]
                 settings["cfg_scale"] += adj.get("cfg_scale", 0)
                 settings["steps"] += adj.get("steps", 0)
 
+    # Clamp values to safe bounds
     settings["cfg_scale"] = max(1.0, min(20.0, settings["cfg_scale"]))
     settings["steps"] = max(10, min(100, settings["steps"]))
     settings["denoise"] = max(0.0, min(1.0, settings["denoise"]))
