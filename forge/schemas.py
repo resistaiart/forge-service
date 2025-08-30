@@ -1,7 +1,7 @@
-# forge/schemas.py — Shared Pydantic models
-
+# forge/schemas.py
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Literal
+
 from forge.public_interface import PackageGoal
 
 
