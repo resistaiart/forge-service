@@ -1,4 +1,3 @@
-# forge_integrations.py
 import os
 import requests
 import logging
@@ -7,14 +6,12 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-
 class IntegrationStatus(Enum):
     ACTIVE = "active"
     AVAILABLE = "available"
     PLANNED = "planned"
     DISABLED = "disabled"
     ERROR = "error"
-
 
 class Integration:
     """Base class for all integrations."""
@@ -42,7 +39,6 @@ class Integration:
             "configured": bool(self.config),
             "base_url": self.base_url,
         }
-
 
 class HuggingFaceIntegration(Integration):
     def __init__(self):
@@ -74,7 +70,6 @@ class HuggingFaceIntegration(Integration):
         response.raise_for_status()
         return response.json()
 
-
 class CivitAIIntegration(Integration):
     def __init__(self):
         super().__init__(
@@ -100,3 +95,11 @@ class CivitAIIntegration(Integration):
         except Exception as e:
             logger.error(f"CivitAI search failed: {str(e)}")
             return []
+
+def list_integrations() -> List[str]:
+    """List all available integrations."""
+    integrations = [HuggingFaceIntegration(), CivitAIIntegration()]
+    active_integrations = [
+        integration.name for integration in integrations if integration.status == IntegrationStatus.ACTIVE
+    ]
+    return active_integrations
