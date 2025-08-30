@@ -118,7 +118,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 
 *I welcome contributions to the Forge Project!*
 - If you have any ideas or suggestions for improvement, please don't hesitate to contact me below.
-- 
+
 ### License
 
 - The Forge Service is open source under the MIT License.
