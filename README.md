@@ -6,41 +6,24 @@
 
 **The Forge Project** is a powerful backend API service designed to provide customizable, AI-powered content generation capabilities. It supports a variety of goals, including **Text-to-Image** (T2I), **Image-to-Image** (I2I), **Text-to-Video** (T2V), and **Image Upscaling**. Built using **FastAPI**, the service handles requests related to content generation, integrates safety filters, provides detailed diagnostics, and offers a flexible workflow for generating high-quality AI-generated visuals.
 
-## Features
+## 🧠 Philosophy & Architecture
 
-- **Text-to-Image (T2I)**: Generate images based on textual prompts.
-- **Image-to-Image (I2I)**: Transform existing images based on new prompts.
-- **Text-to-Video (T2V)**: Create videos from textual descriptions.
-- **Image Upscaling**: Enhance the resolution of images using AI.
-- **Interrogate/Captioning**: Analyse and caption images using advanced AI models.
-- **Content Safety Scrubbing**: Ensures content is free from NSFW or disallowed elements.
-- **User Profiles**: Personalise content generation settings per user.
-- **Comprehensive Diagnostics**: Provides detailed explanations of the chosen settings and alternative options.
-- **Integration Support**: Easily integrates with external APIs and services.
+> *"I am The Forge Project. My mission is simple: I do not render images or videos. I engineer the inputs that ensure rendering succeeds."*
 
-## Key Components
+### The Problem 🤔
 
-### API Endpoints
-- **/v2/optimise**: Optimizes content generation (e.g., T2I, I2I, T2V).
-- **/v2/analyse**: Analyzes images and generates captions.
-- **/health**: Checks the health status of the service.
-- **/version**: Returns the current version of the Forge Project.
-- **/manifest**: Serves the Forge manifest as raw JSON.
+AI image/video workflows are fragmented across dozens of tools and platforms. Prompts, captions, checkpoints, LoRAs, configs, and workflow graphs are scattered everywhere. This fragmentation wastes creative cycles and kills momentum.
 
-### Core Files
-- **main.py**: The entry point for the FastAPI app. It defines the web server and routes for various functionalities, such as health checks, manifest routes, and sealed/legacy API routes.
-- **forge/workflows.py**: Handles the core logic for generating and optimising images/videos based on the user's request.
-- **forge/prompts.py**: Builds and cleans prompts, applies custom weights, and analyses the prompt style for optimised content generation.
-- **forge/settings.py**: Contains default settings for different goals (e.g., T2I, I2V), with support for customisation based on user profiles.
-- **forge/safety.py**: Ensures that the generated content adheres to safety standards by blocking or modifying problematic content (e.g., NSFW, explicit content).
-- **forge/resources.py**: Manages resources like models, checkpoints, and datasets, validating them for content generation.
-- **forge/captions.py**: Generates captions for the images, allowing the user to provide descriptions in various styles and tones.
-- **forge/diagnostics.py**: Provides insights into the performance of different settings, the reasoning behind choices, and alternative configurations for optimisation.
-- **forge/integrations.py**: Manages external integrations and adds additional features like interacting with other APIs or services.
-- **forge/profiles.py**: Manages user profiles, including their preferences for content generation and adjusts the settings accordingly.
+### The Solution: AI Optimised Prompt Packages! ✅
 
-##
----
+💥**Prompt Packages are synchronised, structured blueprints** that eliminate fragmentation. 
+
+**Each Optimised Prompt Package:** 
+- **Ties directly** to exact ComfyUI workflows (text-to-image, text-to-video, image-to-video, etc)
+- **Optimises every parameter** - checkpoints, samplers, schedulers, resolutions, LoRAs, seeds
+- **Is versioned and documented** for quality, speed, and fidelity
+- **Records what changed** and why it changed!
+- **Remains auditable, reusable, and scalable**
 
 ## ✨ What Does The Forge Do?
 
@@ -82,6 +65,46 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 - External APIs: Can connect to platforms like HuggingFace, CivitAI, etc.
 - Workflow Patches: Supports ComfyUI patches for user-specific workflows.
 
+### Technical Architecture 🤖
+Built with modern Python tools:
+- **FastAPI** - High-performance web framework
+- **Pydantic** - Data validation and serialization
+- **Hugging Face Inference** - AI model integration
+- **Uvicorn** - Lightning-fast ASGI server
+
+## Features
+- **Text-to-Image (T2I)**: Generate images based on textual prompts.
+- **Image-to-Image (I2I)**: Transform existing images based on new prompts.
+- **Text-to-Video (T2V)**: Create videos from textual descriptions.
+- **Image Upscaling**: Enhance the resolution of images using AI.
+- **Interrogate/Captioning**: Analyse and caption images using advanced AI models.
+- **Content Safety Scrubbing**: Ensures content is free from NSFW or disallowed elements.
+- **User Profiles**: Personalise content generation settings per user.
+- **Comprehensive Diagnostics**: Provides detailed explanations of the chosen settings and alternative options.
+- **Integration Support**: Easily integrates with external APIs and services.
+
+### Key Components
+## API Endpoints
+- **/v2/optimise**: Optimizes content generation (e.g., T2I, I2I, T2V).
+- **/v2/analyse**: Analyzes images and generates captions.
+- **/health**: Checks the health status of the service.
+- **/version**: Returns the current version of the Forge Project.
+- **/manifest**: Serves the Forge manifest as raw JSON.
+
+### Core Files
+- **main.py**: The entry point for the FastAPI app. It defines the web server and routes for various functionalities, such as health checks, manifest routes, and sealed/legacy API routes.
+- **forge/workflows.py**: Handles the core logic for generating and optimising images/videos based on the user's request.
+- **forge/prompts.py**: Builds and cleans prompts, applies custom weights, and analyses the prompt style for optimised content generation.
+- **forge/settings.py**: Contains default settings for different goals (e.g., T2I, I2V), with support for customisation based on user profiles.
+- **forge/safety.py**: Ensures that the generated content adheres to safety standards by blocking or modifying problematic content (e.g., NSFW, explicit content).
+- **forge/resources.py**: Manages resources like models, checkpoints, and datasets, validating them for content generation.
+- **forge/captions.py**: Generates captions for the images, allowing the user to provide descriptions in various styles and tones.
+- **forge/diagnostics.py**: Provides insights into the performance of different settings, the reasoning behind choices, and alternative configurations for optimisation.
+- **forge/integrations.py**: Manages external integrations and adds additional features like interacting with other APIs or services.
+- **forge/profiles.py**: Manages user profiles, including their preferences for content generation and adjusts the settings accordingly.
+
+---
+
 ### Contributing
 
 *I welcome contributions to the Forge Project!* 
@@ -91,42 +114,11 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 
 - The Forge Project is open source under the MIT License.
 
-## 🧠 Philosophy & Architecture
-
-> *"I am The Forge Project. My mission is simple: I do not render images or videos. I engineer the inputs that ensure rendering succeeds."*
-
-### The Problem 🤔
-
-AI art workflows are fragmented across dozens of tools and platforms. Prompts, captions, checkpoints, LoRAs, configs, and workflow graphs are scattered everywhere. This fragmentation wastes creative cycles and kills momentum.
-
-### The Solution: AI Optimised Prompt Packages! ✅
-
-💥**Prompt Packages are synchronised, structured blueprints** that eliminate fragmentation. 
-
-**Each Optimised Prompt Package:** 
-- **Ties directly** to exact ComfyUI workflows (text-to-image, text-to-video, image-to-video, etc)
-- **Optimises every parameter** - checkpoints, samplers, schedulers, resolutions, LoRAs, seeds
-- **Is versioned and documented** for quality, speed, and fidelity
-- **Records what changed** and why it changed!
-- **Remains auditable, reusable, and scalable**
-
-### Technical Architecture 🤖
-
-Built with modern Python tools:
-- **FastAPI** - High-performance web framework
-- **Pydantic** - Data validation and serialization
-- **Hugging Face Inference** - AI model integration
-- **Uvicorn** - Lightning-fast ASGI server
-
-Key modules include `forge_prompts.py`, `forge_image_analysis.py`, `forge_resources.py`, and `forge_settings.py` - each handling a specific aspect of the package generation process.
-
 ---
 
 ## 📞 Contact
 
 - **Contact**: [Resist](https://x.com/ResistAiArt) on 𝕏
-
----
 
 ## 📜 License & Policies
 
@@ -137,4 +129,4 @@ Key modules include `forge_prompts.py`, `forge_image_analysis.py`, `forge_resour
 
 ---
 
-**Created by [Resist](https://x.com/ResistAiArt)** - Engineering Perfection in AI Art Generation.
+**Created with love by [Resist](https://x.com/ResistAiArt)** - Engineering Perfection in AI Art Generation.
