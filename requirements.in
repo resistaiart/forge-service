@@ -20,6 +20,7 @@ torchvision==0.18.1
 # Utility + Serialization
 typing-extensions==4.12.2
 pydantic==2.7.3
+pydantic-settings==2.11.1  # Ensure this matches Pydantic 2.x compatibility
 python-dotenv==1.0.1
 python-multipart==0.0.9
 
