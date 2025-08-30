@@ -1,10 +1,11 @@
 # forge/package.py
 import time
 import logging
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from functools import lru_cache
 
-# Imports from the forge modules
+# Forge modules
 from forge.prompts import build_prompts
 from forge.settings import build_settings
 from forge.resources import validate_resources
@@ -27,27 +28,24 @@ def build_package(
     user_id: str = "default",
     descriptors: Optional[Dict[str, Any]] = None,
     allow_nsfw: bool = False,
+    include_benchmarks: bool = True,
 ) -> Dict[str, Any]:
     """
-    Build a full Forge Prompt Package by orchestrating specialized modules.
+    Build a full Forge Prompt Package.
     Returns a dictionary aligned with ForgePromptPackage contract.
     """
 
     logger.info(f"Building package for user '{user_id}' with goal '{package_goal}'")
     _validate_package_goal(package_goal)
 
-    # Scrub prompt for safety
     cleaned_prompt = safety_scrub(prompt, allow_nsfw=allow_nsfw)
-
     resources = resources or []
     profile = load_profile(user_id)
     start_time = time.time()
 
-    # Enrich prompt with descriptors
     enriched_prompt = _enrich_prompt_with_descriptors(cleaned_prompt, descriptors)
 
     try:
-        # Build components
         pos_prompt, neg_prompt = build_prompts(enriched_prompt, profile)
         settings = build_settings(profile, package_goal)
         settings = adapt_settings(settings, profile)
@@ -55,18 +53,20 @@ def build_package(
         captions = generate_captions(enriched_prompt, caption, profile)
         captions = adapt_captions(captions, profile)
         diagnostics = generate_diagnostics(settings, validated_resources)
-        benchmarks = run_benchmarks()
+        benchmarks = run_benchmarks() if include_benchmarks else {}
         integrations = list_integrations(active_only=True)
 
     except Exception as e:
-        logger.error(f"Failed to build a package component: {e}", exc_info=True)
-        raise RuntimeError(
-            f"Package construction failed during '{e.__class__.__name__}': {str(e)}"
-        )
+        logger.exception("Package construction failed")
+        return {
+            "package_version": "v1.0",
+            "outcome": "error",
+            "message": f"Package construction failed: {str(e)}",
+        }
 
-    # Final assembly
     build_time = round(time.time() - start_time, 4)
     package_id = f"forge_pkg_{int(start_time)}"
+    timestamp = datetime.now(timezone.utc).isoformat()
 
     package = {
         "package_version": "v1.0",
@@ -75,11 +75,11 @@ def build_package(
         "config": settings,
         "workflow_patch": generate_workflow_patch(settings),
         "safety": build_safety(validated_resources, nsfw_allowed=allow_nsfw),
-        "menus": ["variants", "prompt", "config", "workflow", "help"],
+        "menus": _get_menus(package_goal),
         "package_goal": package_goal,
-        # --- audit / extras ---
+        # audit / extras
         "id": package_id,
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "timestamp": timestamp,
         "build_time_seconds": build_time,
         "diagnostics": {**diagnostics, "build_time": build_time},
         "benchmarks": benchmarks,
@@ -95,9 +95,7 @@ def build_package(
     if metadata:
         package["metadata"] = metadata
 
-    logger.info(
-        f"Package {package_id} built successfully in {build_time}s for goal '{package_goal}'"
-    )
+    logger.info(f"Package {package_id} built successfully in {build_time}s (goal={package_goal})")
     return package
 
 
@@ -107,15 +105,10 @@ def build_package(
 def _validate_package_goal(goal: str):
     valid_goals = {"t2i", "t2v", "i2i", "i2v", "upscale", "interrogate"}
     if goal not in valid_goals:
-        logger.warning(f"Invalid package goal requested: '{goal}'")
-        raise ValueError(
-            f"Unsupported package goal: '{goal}'. Must be one of: {sorted(valid_goals)}"
-        )
+        raise ValueError(f"Unsupported package goal: '{goal}'. Must be one of: {sorted(valid_goals)}")
 
 
-def _enrich_prompt_with_descriptors(
-    base_prompt: str, descriptors: Optional[Dict[str, Any]]
-) -> str:
+def _enrich_prompt_with_descriptors(base_prompt: str, descriptors: Optional[Dict[str, Any]]) -> str:
     if not descriptors:
         return base_prompt
 
@@ -129,11 +122,28 @@ def _enrich_prompt_with_descriptors(
         new_elements.append(subject)
     if style and style.lower() not in prompt_lower:
         new_elements.append(style)
-
     relevant_tags = [tag for tag in tags if tag.lower() not in prompt_lower][:3]
     if relevant_tags:
         new_elements.append(", ".join(relevant_tags))
 
-    if new_elements:
-        return f"{base_prompt}, {', '.join(new_elements)}"
-    return base_prompt
+    return f"{base_prompt}, {', '.join(new_elements)}" if new_elements else base_prompt
+
+
+def _get_menus(package_goal: str) -> List[str]:
+    base_menus = [
+        "variants",
+        "prompt",
+        "negatives",
+        "config",
+        "workflow",
+        "safety",
+        "version",
+        "rationale",
+        "discard",
+        "help",
+    ]
+    if package_goal in ["i2i", "i2v"]:
+        base_menus.append("denoise")
+    if package_goal in ["t2v", "i2v"]:
+        base_menus.extend(["frames", "motion"])
+    return base_menus
