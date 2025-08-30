@@ -1,4 +1,4 @@
-# forge_profiles.py
+# forge/profiles.py
 import json
 import os
 from typing import Dict, Any, Optional, List
