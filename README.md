@@ -24,7 +24,7 @@
 - **/v2/optimise**: Optimizes content generation (e.g., T2I, I2I, T2V).
 - **/v2/analyse**: Analyzes images and generates captions.
 - **/health**: Checks the health status of the service.
-- **/version**: Returns the current version of the Forge service.
+- **/version**: Returns the current version of the Forge Project.
 - **/manifest**: Serves the Forge manifest as raw JSON.
 
 ### Core Files
@@ -56,7 +56,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 
 ### Configuration
 
-**Forge Service allows for deep customisation through user profiles, which store preferences such as:**
+**The Forge Project allows for deep customisation through user profiles, which store preferences such as:**
 - Preferred Sampler
 - Resolution
 - Aspect Ratio
@@ -64,7 +64,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 **These profiles are stored and used to adapt the settings for each generation request, ensuring personalised output.**
 
 ### Diagnostics
-**The service provides detailed diagnostics explaining optimisation choices, such as:**
+**The Forge provides detailed diagnostics explaining optimisation choices, such as:**
 - CFG scale (controls creativity vs. prompt adherence)
 - Sampler choice (e.g., Euler vs. DPM)
 - Resolution (e.g., 832x1216 for general use, or 1024x1024 for upscaling)
@@ -72,13 +72,13 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 **Diagnostics also include alternative options for each setting, helping users understand how to tweak their settings for different outcomes.**
 
 ### Safety Scrubbing
-**Safety scrubbing ensures that no harmful or disallowed content is used in the prompt. The service filters out:**
+**Safety scrubbing ensures that no harmful or disallowed content is used in the prompt. The Forge filters out:**
 - NSFW or explicit content
 - Child-related terms or youth-coded tokens
 - Other unwanted keywords, such as abuse or violence
 
 ### Integrations
-**The Forge Service can integrate with various external systems, such as:**
+**The Forge can integrate with various external systems, such as:**
 - External APIs: Can connect to platforms like HuggingFace, CivitAI, etc.
 - Workflow Patches: Supports ComfyUI patches for user-specific workflows.
 
@@ -89,7 +89,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 
 ### License
 
-- The Forge Service is open source under the MIT License.
+- The Forge Project is open source under the MIT License.
 
 ## 🧠 Philosophy & Architecture
 
