@@ -1,4 +1,4 @@
-# forge/config.py — Centralized settings management
+# forge/config.py — Centralized settings and constants
 import os
 import logging
 from typing import List
@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, env="PORT")
     cors_origins: List[str] = Field(default=["*"], env="CORS_ORIGINS")
 
+    enable_legacy: bool = Field(default=True, env="FORGE_ENABLE_LEGACY")
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
@@ -38,5 +40,17 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Used in `/version` endpoint
+ENDPOINTS = {
+    "legacy": [
+        "/optimise", "/t2i", "/t2v",
+        "/optimise/i2i", "/optimise/t2v", "/analyse"
+    ],
+    "sealed_workshop": ["/v2/optimise", "/v2/analyse"],
+    "health": "/health",
+    "version": "/version",
+    "manifest": "/manifest"
+}
 
 logger.info(f"Loaded config for {settings.app_name} v{settings.version} on port {settings.port}")
