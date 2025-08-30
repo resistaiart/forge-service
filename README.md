@@ -15,7 +15,8 @@ AI image/video workflows are fragmented across dozens of tools and platforms. Pr
 
 ## The Solution: AI Optimised Prompt Packages 
 
-**These are synchronised, structured blueprints** that eliminate prompt fragmentation
+**These are synchronised, structured blueprints** that eliminate prompt fragmentation.
+
 Each Optimised Prompt Package:
 - **Ties directly** to exact ComfyUI workflows (text-to-image, text-to-video, image-to-video, etc)
 - **Optimises every parameter** - checkpoints, samplers, schedulers, resolutions, LoRAs, seeds
@@ -24,7 +25,7 @@ Each Optimised Prompt Package:
 - **Remains auditable, reusable, and scalable**
 
 ## ✨ What Does The Forge Do?
-**The Forge GPT takes your creative ideas and turns them into engineered specifications that Comfyui understand perfectly**
+**The Forge takes your creative ideas and turns them into engineered specifications that Stable Diffusion understands perfectly!**
 - **🎯 Prompt Optimisation**: Transforms basic prompts into highly detailed, weighted instructions
 - **🖼️ Image Analysis**: Provides detailed descriptions and captions for any image
 - **⚙️ Smart Settings**: Automatically recommends optimal model settings, samplers, and parameters
