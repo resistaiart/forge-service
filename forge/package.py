@@ -46,7 +46,6 @@ def build_package(
     # Enrich prompt with descriptors
     enriched_prompt = _enrich_prompt_with_descriptors(cleaned_prompt, descriptors)
 
-    package_components = {}
     try:
         # Build components
         pos_prompt, neg_prompt = build_prompts(enriched_prompt, profile)
@@ -58,20 +57,6 @@ def build_package(
         diagnostics = generate_diagnostics(settings, validated_resources)
         benchmarks = run_benchmarks()
         integrations = list_integrations(active_only=True)
-
-        # Attach into dict
-        package_components.update(
-            {
-                "positive": pos_prompt,
-                "negative": neg_prompt,
-                "settings": settings,
-                "resources": validated_resources,
-                "captions": captions,
-                "diagnostics": diagnostics,
-                "benchmarks": benchmarks,
-                "integrations": integrations,
-            }
-        )
 
     except Exception as e:
         logger.error(f"Failed to build a package component: {e}", exc_info=True)
@@ -85,24 +70,23 @@ def build_package(
 
     package = {
         "package_version": "v1.0",
-        "positive": package_components["positive"],
-        "negative": package_components["negative"],
-        "config": package_components["settings"],
-        "workflow_patch": generate_workflow_patch(package_components["settings"]),
-        "safety": build_safety(package_components["resources"], nsfw_allowed=allow_nsfw),
+        "positive": pos_prompt,
+        "negative": neg_prompt,
+        "config": settings,
+        "workflow_patch": generate_workflow_patch(settings),
+        "safety": build_safety(validated_resources, nsfw_allowed=allow_nsfw),
         "menus": ["variants", "prompt", "config", "workflow", "help"],
         "package_goal": package_goal,
-        # Extras for auditability
+        # --- audit / extras ---
         "id": package_id,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "build_time_seconds": build_time,
-        "diagnostics": {**package_components["diagnostics"], "build_time": build_time},
-        "benchmarks": package_components["benchmarks"],
-        "integrations": package_components["integrations"],
+        "diagnostics": {**diagnostics, "build_time": build_time},
+        "benchmarks": benchmarks,
+        "integrations": integrations,
         "profile_used": profile,
     }
 
-    # Optional metadata
     metadata = {}
     if caption:
         metadata["user_caption"] = caption
@@ -121,7 +105,6 @@ def build_package(
 
 @lru_cache(maxsize=32)
 def _validate_package_goal(goal: str):
-    """Validate provided package goal."""
     valid_goals = {"t2i", "t2v", "i2i", "i2v", "upscale", "interrogate"}
     if goal not in valid_goals:
         logger.warning(f"Invalid package goal requested: '{goal}'")
@@ -133,7 +116,6 @@ def _validate_package_goal(goal: str):
 def _enrich_prompt_with_descriptors(
     base_prompt: str, descriptors: Optional[Dict[str, Any]]
 ) -> str:
-    """Merge image descriptors into the original prompt, avoiding duplication."""
     if not descriptors:
         return base_prompt
 
@@ -153,9 +135,5 @@ def _enrich_prompt_with_descriptors(
         new_elements.append(", ".join(relevant_tags))
 
     if new_elements:
-        enriched_prompt = f"{base_prompt}, {', '.join(new_elements)}"
-        logger.debug(f"Enriched prompt with descriptors: '{enriched_prompt}'")
-        return enriched_prompt
-    else:
-        logger.debug("No new descriptors added to prompt")
-        return base_prompt
+        return f"{base_prompt}, {', '.join(new_elements)}"
+    return base_prompt
