@@ -10,7 +10,7 @@ from forge.prompts import build_prompts
 from forge.settings import build_settings
 from forge.resources import validate_resources
 from forge.captions import generate_captions
-from forge.diagnostics import generate_diagnostics
+from forge.diagnostics import generate_diagnostics, DiagnosticLevel
 from forge.benchmarking import run_benchmarks
 from forge.profiles import load_profile, adapt_settings, adapt_captions
 from forge.integrations import list_integrations
@@ -23,12 +23,13 @@ logger = logging.getLogger(__name__)
 def build_package(
     package_goal: str,
     prompt: str,
-    resources: Optional[List[str]] = None,
+    resources: Optional[List[Dict[str, Any]]] = None,
     caption: Optional[str] = None,
     user_id: str = "default",
     descriptors: Optional[Dict[str, Any]] = None,
     allow_nsfw: bool = False,
     include_benchmarks: bool = True,
+    diagnostics_level: DiagnosticLevel = DiagnosticLevel.DETAILED,
 ) -> Dict[str, Any]:
     """
     Build a full Forge Prompt Package.
@@ -38,21 +39,30 @@ def build_package(
     logger.info(f"Building package for user '{user_id}' with goal '{package_goal}'")
     _validate_package_goal(package_goal)
 
+    # Step 1: Clean + profile
     cleaned_prompt = safety_scrub(prompt, allow_nsfw=allow_nsfw)
     resources = resources or []
     profile = load_profile(user_id)
     start_time = time.time()
 
+    # Step 2: Prompt enrichment
     enriched_prompt = _enrich_prompt_with_descriptors(cleaned_prompt, descriptors)
 
     try:
+        # Step 3: Core builders
         pos_prompt, neg_prompt = build_prompts(enriched_prompt, profile)
         settings = build_settings(profile, package_goal)
         settings = adapt_settings(settings, profile)
         validated_resources = validate_resources(resources)
+
+        # Step 4: Captions + adaptation
         captions = generate_captions(enriched_prompt, caption, profile)
         captions = adapt_captions(captions, profile)
-        diagnostics = generate_diagnostics(settings, validated_resources)
+
+        # Step 5: Diagnostics
+        diagnostics = generate_diagnostics(settings, validated_resources, diagnostics_level)
+
+        # Step 6: Benchmarks & integrations
         benchmarks = run_benchmarks() if include_benchmarks else {}
         integrations = list_integrations(active_only=True)
 
@@ -64,6 +74,7 @@ def build_package(
             "message": f"Package construction failed: {str(e)}",
         }
 
+    # Step 7: Final package assembly
     build_time = round(time.time() - start_time, 4)
     package_id = f"forge_pkg_{int(start_time)}"
     timestamp = datetime.now(timezone.utc).isoformat()
@@ -85,6 +96,7 @@ def build_package(
         "benchmarks": benchmarks,
         "integrations": integrations,
         "profile_used": profile,
+        "captions": captions,
     }
 
     metadata = {}
