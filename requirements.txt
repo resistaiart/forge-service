@@ -1,41 +1,38 @@
-#
-# Locked requirements for Forge API
-# Generated from requirements.in + extras
-#
+# Forge API — Primary Python Requirements
+# Compiled into requirements.txt using: pip-compile requirements.in
 
-accelerate==0.33.0
-    # via requirements.in
+# Core Web/API stack
 fastapi==0.111.0
-    # via requirements.in
-gunicorn==23.0.0
-    # via requirements.in
-huggingface-hub==0.24.6
-    # via requirements.in
-numpy==1.26.4
-    # required by torch / torchvision
-pillow==10.4.0
-    # via requirements.in
-psutil==5.9.8
-    # system monitoring
-pyyaml==6.0.1
-    # yaml configuration
-python-dotenv==1.0.1
-    # env management
-python-multipart==0.0.9
-    # file uploads (fastapi) — bumped for fastapi>=0.111.0
-requests==2.32.3
-    # via requirements.in
-safetensors==0.4.4
-    # via requirements.in
-slowapi==0.1.9
-    # rate limiting
-torch==2.3.1
-    # via requirements.in
-torchvision==0.18.1
-    # via requirements.in
-transformers==4.44.2
-    # via requirements.in
-typing-extensions==4.12.2
-    # required by torch / fastapi / pydantic
 uvicorn==0.30.1
-    # via requirements.in
+requests==2.32.3
+
+# Image + Video Processing
+numpy==1.26.4
+pillow==10.4.0
+opencv-python==4.12.0.0
+
+# AI/ML + Prompting
+accelerate==0.33.0
+transformers==4.44.2
+torch==2.3.1
+torchvision==0.18.1
+
+# Utility + Serialization
+typing-extensions==4.12.2
+pydantic==2.7.3
+python-dotenv==1.0.1
+python-multipart==0.0.9
+
+# Monitoring + Safety
+huggingface-hub==0.24.6
+safetensors==0.4.4
+slowapi==0.1.9
+
+# Workflow + Dependency Management
+psutil==5.9.8
+pyyaml==6.0.1
+gunicorn==23.0.0
+
+# Optional: enable with pip-compile --generate-hashes
+# To audit: pip-audit -r requirements.txt
+pydantic-settings==2.11.1  # Add this line
