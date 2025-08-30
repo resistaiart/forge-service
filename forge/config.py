@@ -1,15 +1,13 @@
-# forge/config.py — Centralized settings and constants
 import os
 import logging
 from typing import List
 from dotenv import load_dotenv
-from pydantic import BaseSettings, Field, validator
+from pydantic_settings import BaseSettings, Field, validator  # Updated import
 
 # Load .env if available
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-
 
 class Settings(BaseSettings):
     app_name: str = "Forge API"
@@ -37,7 +35,6 @@ class Settings(BaseSettings):
         if not (1 <= v <= 65535):
             raise ValueError("PORT must be between 1 and 65535")
         return v
-
 
 settings = Settings()
 
