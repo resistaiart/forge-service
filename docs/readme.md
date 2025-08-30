@@ -78,7 +78,7 @@ Copy code
 
 ## Finalised Prompt Package Contract
 
-```json
+
 {
   "package_version": "v1.0",
   "positive": "cleaned, weighted prompt",
