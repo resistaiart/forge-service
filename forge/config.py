@@ -2,7 +2,8 @@ import os
 import logging
 from typing import List
 from dotenv import load_dotenv
-from pydantic_settings import BaseSettings, Field, validator  # Updated import
+from pydantic_settings import BaseSettings
+from pydantic import Field, validator  # Correct import location
 
 # Load .env if available
 load_dotenv()
