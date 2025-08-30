@@ -53,7 +53,16 @@
     },
     "ForgePromptPackage": {
       "type": "object",
-      "required": ["package_version", "positive", "negative", "config", "workflow_patch", "safety", "menus", "package_goal"],
+      "required": [
+        "package_version",
+        "positive",
+        "negative",
+        "config",
+        "workflow_patch",
+        "safety",
+        "menus",
+        "package_goal"
+      ],
       "properties": {
         "package_version": { "type": "string" },
         "positive": { "type": "string" },
@@ -98,6 +107,38 @@
         "package_goal": {
           "type": "string",
           "enum": ["t2i", "i2i", "t2v", "i2v"]
+        },
+        "diagnostics": {
+          "type": "object",
+          "description": "System-level diagnostics and build info"
+        },
+        "benchmarks": {
+          "type": "object",
+          "description": "Performance and quality benchmark results"
+        },
+        "integrations": {
+          "type": "object",
+          "description": "Active integration metadata"
+        },
+        "profile_used": {
+          "type": "object",
+          "description": "Profile context applied to this package"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Optional metadata (captions, descriptors, etc.)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Build timestamp in ISO 8601"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique package identifier"
+        },
+        "build_time_seconds": {
+          "type": "number",
+          "description": "Package build duration"
         }
       }
     }
