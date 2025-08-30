@@ -1,6 +1,6 @@
 # main.py
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
@@ -209,7 +209,7 @@ async def version():
             "analysis": "/analyse",
             "health": "/health",
             "manifest": "/manifest",
-            "manifest_full": "/manifest/full",
+            "manifest_full": "/manifest/full",   # ✅ new endpoint advertised
             "contracts": "/contracts",
         },
     }
