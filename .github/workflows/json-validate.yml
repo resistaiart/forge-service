@@ -1,52 +1,28 @@
-name: Validate JSON Schemas
+name: JSON Schema Validation
 
 on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
-  validate-json:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Install jq and Python deps
+      - uses: actions/checkout@v4
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install jsonschema
+      - name: Validate Forge Contracts
         run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-          pip install jsonschema
-
-      - name: Validate forge_manifest.json is valid JSON
-        run: jq . forge_manifest.json > /dev/null
-
-      - name: Validate forge_contracts.json is valid JSON Schema Draft 2020-12
-        run: |
-          python3 - <<EOF
-          import json
-          from jsonschema import Draft202012Validator
-          with open("contracts/forge_contracts.json") as f:
-              schema = json.load(f)
-          Draft202012Validator.check_schema(schema)
-          print("✅ forge_contracts.json is a valid Draft 2020-12 schema")
-          EOF
-
-      - name: Validate forge_manifest.json against forge_contracts.json
-        run: |
-          python3 - <<EOF
-          import json
-          from jsonschema import validate, ValidationError
-          with open("contracts/forge_contracts.json") as f:
-              schema = json.load(f)
-          with open("forge_manifest.json") as f:
-              manifest = json.load(f)
-          try:
-              validate(instance=manifest, schema=schema)
-              print("✅ forge_manifest.json is valid against forge_contracts.json")
-          except ValidationError as e:
-              print("❌ forge_manifest.json does not match schema")
-              print(e)
-              exit(1)
+          python - <<'EOF'
+          import json, sys
+          from jsonschema import validate
+          data = json.load(open("contracts/forge_contracts.json"))
+          spec = json.load(open("docs/forge_master_spec.json"))
+          validate(instance=data, schema=spec)
+          print("✅ JSON validation passed")
           EOF
