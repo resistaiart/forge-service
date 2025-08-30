@@ -25,7 +25,7 @@ Each Optimised Prompt Package:
 - **Remains auditable, reusable, and scalable**
 
 ## ✨ What Does The Forge Do?
-**The Forge takes your creative ideas and turns them into engineered specifications that Stable Diffusion understands perfectly!**
+**The Forge takes your creative ideas and turns them into engineered specifications that Stable Diffusion/Comfyui understands perfectly!**
 - **🎯 Prompt Optimisation**: Transforms basic prompts into highly detailed, weighted instructions
 - **🖼️ Image Analysis**: Provides detailed descriptions and captions for any image
 - **⚙️ Smart Settings**: Automatically recommends optimal model settings, samplers, and parameters
