@@ -1,5 +1,5 @@
-# forge_diagnostics.py
-from typing import Dict, List, Any
+# forge/diagnostics.py
+from typing import Dict, List, Any, Optional
 from enum import Enum
 import random
 import logging
@@ -80,11 +80,9 @@ def generate_diagnostics(
     settings: Dict[str, Any],
     resources: List[Dict[str, Any]],
     level: DiagnosticLevel = DiagnosticLevel.DETAILED,
-    seed: int | None = None
+    seed: Optional[int] = None
 ) -> Dict[str, Any]:
-    """
-    Generate comprehensive diagnostics explaining optimization choices.
-    """
+    """Generate comprehensive diagnostics explaining optimization choices."""
     if seed is not None:
         random.seed(seed)
 
@@ -97,7 +95,6 @@ def generate_diagnostics(
         "diagnostics_level": level.value
     }
 
-    # Analyze each setting
     for setting_key, setting_value in settings.items():
         if setting_key in [cat.value for cat in SettingCategory]:
             explanation = _explain_setting(setting_key, setting_value, level)
@@ -111,7 +108,7 @@ def generate_diagnostics(
     return diagnostics
 
 
-def _explain_setting(setting_key: str, setting_value: Any, level: DiagnosticLevel) -> Dict[str, Any] | None:
+def _explain_setting(setting_key: str, setting_value: Any, level: DiagnosticLevel) -> Optional[Dict[str, Any]]:
     """Generate explanation for a specific setting."""
     try:
         category = SettingCategory(setting_key)
@@ -192,4 +189,58 @@ def _explain_setting(setting_key: str, setting_value: Any, level: DiagnosticLeve
     return explanation
 
 
-# (rest of helper functions unchanged from your version, except with added try/except + logger in parsing)
+def _analyze_resources(resources: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Summarize resources used in the package."""
+    return {
+        "total": len(resources),
+        "by_type": {r.get("type", "unknown"): 0 for r in resources},
+        "notable_resources": [r.get("name") for r in resources if r.get("status") != "Verified"]
+    }
+
+
+def _generate_performance_notes(settings: Dict[str, Any]) -> Dict[str, str]:
+    """Generate notes about performance trade-offs."""
+    notes = {}
+    if settings.get("steps", 0) > 40:
+        notes["steps"] = "High steps may slow generation but improve detail"
+    if settings.get("resolution") in ("1024x1024", "1216x832"):
+        notes["resolution"] = "High resolution may increase VRAM usage"
+    if settings.get("cfg_scale", 7.5) > 12:
+        notes["cfg_scale"] = "High CFG may reduce creativity but enforce prompt fidelity"
+    return notes
+
+
+def _generate_summary(diagnostics: Dict[str, Any], settings: Dict[str, Any], resources: List[Dict[str, Any]]) -> str:
+    """Generate human-readable summary of diagnostics."""
+    return (
+        f"Diagnostics for {len(resources)} resources with settings: "
+        f"steps={settings.get('steps')}, cfg_scale={settings.get('cfg_scale')}, "
+        f"sampler={settings.get('sampler')}"
+    )
+
+
+def _generate_recommendations(settings: Dict[str, Any], resources: List[Dict[str, Any]]) -> List[str]:
+    """Suggest recommendations for improvement."""
+    recs = []
+    if settings.get("steps", 0) < 20:
+        recs.append("Increase steps for more detail")
+    if settings.get("cfg_scale", 7.5) < 5.0:
+        recs.append("Increase CFG for better prompt adherence")
+    if len(resources) == 0:
+        recs.append("Add recommended resources (checkpoints, LoRAs, embeddings)")
+    return recs
+
+
+if __name__ == "__main__":
+    test_settings = {
+        "sampler": "DPM++ 2M Karras",
+        "cfg_scale": 7.5,
+        "resolution": "832x1216",
+        "steps": 28,
+        "denoise": 0.4
+    }
+    test_resources = [{"name": "forge-base-v1", "type": "model", "status": "Verified"}]
+
+    result = generate_diagnostics(test_settings, test_resources, DiagnosticLevel.DETAILED, seed=42)
+    import json
+    print(json.dumps(result, indent=2))
