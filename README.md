@@ -12,9 +12,9 @@
 - **Image-to-Image (I2I)**: Transform existing images based on new prompts.
 - **Text-to-Video (T2V)**: Create videos from textual descriptions.
 - **Image Upscaling**: Enhance the resolution of images using AI.
-- **Interrogate/Captioning**: Analyze and caption images using advanced AI models.
+- **Interrogate/Captioning**: Analyse and caption images using advanced AI models.
 - **Content Safety Scrubbing**: Ensures content is free from NSFW or disallowed elements.
-- **User Profiles**: Personalize content generation settings per user.
+- **User Profiles**: Personalise content generation settings per user.
 - **Comprehensive Diagnostics**: Provides detailed explanations of the chosen settings and alternative options.
 - **Integration Support**: Easily integrates with external APIs and services.
 
@@ -28,14 +28,14 @@
 - **/manifest**: Serves the Forge manifest as raw JSON.
 
 ### Core Files
-- **main.py**: The entry point for the FastAPI app. It defines the web server and routes for various functionalities like health checks, manifest routes, and sealed/legacy API routes.
-- **forge/workflows.py**: Handles the core logic for generating and optimizing images/videos based on the user's request.
-- **forge/prompts.py**: Builds and cleans prompts, applies custom weights, and analyzes the prompt style for optimized content generation.
-- **forge/settings.py**: Contains default settings for different goals (e.g., T2I, I2V), with support for customization based on user profiles.
+- **main.py**: The entry point for the FastAPI app. It defines the web server and routes for various functionalities, such as health checks, manifest routes, and sealed/legacy API routes.
+- **forge/workflows.py**: Handles the core logic for generating and optimising images/videos based on the user's request.
+- **forge/prompts.py**: Builds and cleans prompts, applies custom weights, and analyses the prompt style for optimised content generation.
+- **forge/settings.py**: Contains default settings for different goals (e.g., T2I, I2V), with support for customisation based on user profiles.
 - **forge/safety.py**: Ensures that the generated content adheres to safety standards by blocking or modifying problematic content (e.g., NSFW, explicit content).
 - **forge/resources.py**: Manages resources like models, checkpoints, and datasets, validating them for content generation.
 - **forge/captions.py**: Generates captions for the images, allowing the user to provide descriptions in various styles and tones.
-- **forge/diagnostics.py**: Provides insights into the performance of different settings, the reasoning behind choices, and alternative configurations for optimization.
+- **forge/diagnostics.py**: Provides insights into the performance of different settings, the reasoning behind choices, and alternative configurations for optimisation.
 - **forge/integrations.py**: Manages external integrations and adds additional features like interacting with other APIs or services.
 - **forge/profiles.py**: Manages user profiles, including their preferences for content generation and adjusts the settings accordingly.
 
@@ -53,38 +53,6 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 - **🔧 Workflow Integration**: Creates ready-to-use packages for ComfyUI and other AI tools
 
 ---
-
-## 📖 API Reference
-
-### Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/optimise` | Create optimized prompt packages |
-| `POST` | `/analyse` | Analyze images and generate descriptions |
-| `GET`  | `/health` | Check API status |
-
-### Example Package Output
-
-```json
-{
-  "goal": "t2i",
-  "positive_prompt": "((cyberpunk:1.4)) ((samurai:1.3)) warrior in ((neon:1.3))-lit Tokyo streets at night, cinematic masterpiece",
-  "negative_prompt": "blurry, low quality, watermark, bad anatomy, deformed",
-  "settings": {
-    "checkpoint": "forge-base-v1.safetensors",
-    "sampler": "DPM++ 2M Karras",
-    "steps": 28,
-    "cfg_scale": 8.0,
-    "resolution": "832x1216"
-  },
-  "resources": ["cyberpunk_lora.safetensors"],
-  "diagnostics": {
-    "cfg_reason": "CFG 8.0 optimised for cyberpunk style",
-    "detected_style": "cyberpunk"
-  }
-}
-```
 
 ### Configuration
 
@@ -107,7 +75,7 @@ The Forge GPT takes your creative ideas and turns them into engineered specifica
 **Safety scrubbing ensures that no harmful or disallowed content is used in the prompt. The service filters out:**
 - NSFW or explicit content
 - Child-related terms or youth-coded tokens
-- Other unwanted keywords such as abuse or violence
+- Other unwanted keywords, such as abuse or violence
 
 ### Integrations
 **The Forge Service can integrate with various external systems, such as:**
