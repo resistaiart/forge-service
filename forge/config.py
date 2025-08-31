@@ -5,7 +5,7 @@ from typing import List
 from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 # Load .env from the correct location
 env_path = Path("forge-service") / ".env"
@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     chroma_server_http_port: int = Field(default=8000, env="CHROMA_SERVER_HTTP_PORT")
     chroma_server_grpc_port: int = Field(default=50051, env="CHROMA_SERVER_GRPC_PORT")
     chroma_server_cors_allow_origins: List[str] = Field(
-        default=["http://localhost:3000"], 
+        default=["http://localhost:3000"],
         env="CHROMA_SERVER_CORS_ALLOW_ORIGINS"
     )
     chroma_persist_directory: str = Field(default="./chroma_db", env="CHROMA_PERSIST_DIRECTORY")
@@ -37,47 +37,43 @@ class Settings(BaseSettings):
     class Config:
         env_file_encoding = "utf-8"
 
-    @validator("cors_origins", pre=True)
+    @field_validator("cors_origins", mode="before")
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
-            # Handle JSON string format
-            if v.startswith('[') and v.endswith(']'):
+            if v.startswith("[") and v.endswith("]"):
                 try:
                     return json.loads(v)
                 except json.JSONDecodeError:
                     logger.warning(f"Invalid JSON format for CORS_ORIGINS: {v}")
                     return ["*"]
-            # Handle comma-separated string
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
-    @validator("chroma_server_cors_allow_origins", pre=True)
+    @field_validator("chroma_server_cors_allow_origins", mode="before")
     def parse_chroma_cors_origins(cls, v):
         if isinstance(v, str):
-            # Handle JSON string format
-            if v.startswith('[') and v.endswith(']'):
+            if v.startswith("[") and v.endswith("]"):
                 try:
                     return json.loads(v)
                 except json.JSONDecodeError:
-                    logger.warning(f"Invalid JSON format for CORS origins: {v}")
+                    logger.warning(f"Invalid JSON format for CHROMA_SERVER_CORS_ALLOW_ORIGINS: {v}")
                     return ["http://localhost:3000"]
-            # Handle comma-separated string
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
-    @validator("port")
+    @field_validator("port")
     def validate_port(cls, v):
         if not (1 <= v <= 65535):
             raise ValueError("PORT must be between 1 and 65535")
         return v
 
-    @validator("chroma_server_http_port")
+    @field_validator("chroma_server_http_port")
     def validate_chroma_http_port(cls, v):
         if not (1 <= v <= 65535):
             raise ValueError("CHROMA_SERVER_HTTP_PORT must be between 1 and 65535")
         return v
 
-    @validator("chroma_server_grpc_port")
+    @field_validator("chroma_server_grpc_port")
     def validate_chroma_grpc_port(cls, v):
         if not (1 <= v <= 65535):
             raise ValueError("CHROMA_SERVER_GRPC_PORT must be between 1 and 65535")
