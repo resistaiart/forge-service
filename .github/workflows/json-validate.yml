@@ -4,25 +4,37 @@ on:
   push:
     branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Python
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      - name: Install dependencies
-        run: pip install jsonschema
+
+      - name: Install jsonschema
+        run: pip install --upgrade jsonschema
+
       - name: Validate Forge Contracts
         run: |
           python - <<'EOF'
           import json, sys
-          from jsonschema import validate
-          data = json.load(open("contracts/forge_contracts.json"))
-          spec = json.load(open("docs/forge_master_spec.json"))
-          validate(instance=data, schema=spec)
-          print("✅ JSON validation passed")
+          from jsonschema import validate, ValidationError
+
+          try:
+              with open("contracts/forge_contracts.json") as f:
+                  data = json.load(f)
+              with open("docs/forge_master_spec.json") as f:
+                  schema = json.load(f)
+              validate(instance=data, schema=schema)
+              print("✅ JSON validation passed")
+          except ValidationError as e:
+              print("❌ Validation failed:", e)
+              sys.exit(1)
           EOF
