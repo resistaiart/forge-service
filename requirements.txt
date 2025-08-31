@@ -1,5 +1,5 @@
 # Forge API — Locked Python Requirements
-# Generated with: pip-compile requirements.in
+# Safe for Nixpacks builds
 
 fastapi==0.111.0
 uvicorn==0.30.1
