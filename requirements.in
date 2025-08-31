@@ -1,5 +1,4 @@
 # Forge API — Primary Python Requirements
-# This file is for top-level dependencies.
 # Run: pip-compile --upgrade requirements.in
 
 # Core Web/API stack
