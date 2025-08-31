@@ -40,6 +40,14 @@ class Settings(BaseSettings):
     @validator("cors_origins", pre=True)
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
+            # Handle JSON string format
+            if v.startswith('[') and v.endswith(']'):
+                try:
+                    return json.loads(v)
+                except json.JSONDecodeError:
+                    logger.warning(f"Invalid JSON format for CORS_ORIGINS: {v}")
+                    return ["*"]
+            # Handle comma-separated string
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
