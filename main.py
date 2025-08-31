@@ -35,6 +35,17 @@ logging.basicConfig(level=logging.INFO, format="[Forge] %(levelname)s: %(message
 logger = logging.getLogger(__name__)
 
 # =====================
+# STARTUP EVENT
+# =====================
+@app.on_event("startup")
+async def startup_event():
+    logger.info(f"🚀 {settings.app_name} v{settings.version} starting up...")
+    logger.info(f"📍 Environment: {settings.environment}")
+    logger.info(f"🌐 CORS origins: {settings.cors_origins}")
+    logger.info(f"🔧 Debug mode: {settings.debug}")
+    logger.info(f"🔗 Chroma DB: {settings.chroma_server_host}:{settings.chroma_server_http_port}")
+
+# =====================
 # REQUEST/RESPONSE MODELS
 # =====================
 class OptimiseRequest(BaseModel):
@@ -155,7 +166,29 @@ async def analyse(request: AnalyseRequest):
 # =====================
 @app.get("/health", response_model=StandardResponse)
 async def health():
-    return {"outcome": "success", "message": "healthy"}
+    try:
+        health_status = {
+            "status": "healthy",
+            "version": settings.version,
+            "environment": settings.environment,
+            "service": settings.app_name
+        }
+        return {"outcome": "success", "result": health_status}
+    except Exception as e:
+        return {"outcome": "error", "message": f"Health check failed: {str(e)}"}
+
+@app.get("/chroma-status", response_model=StandardResponse)
+async def chroma_status():
+    try:
+        chroma_info = {
+            "host": settings.chroma_server_host,
+            "http_port": settings.chroma_server_http_port,
+            "cors_origins": settings.chroma_server_cors_allow_origins,
+            "persist_directory": settings.chroma_persist_directory
+        }
+        return {"outcome": "success", "result": chroma_info}
+    except Exception as e:
+        return {"outcome": "error", "message": f"Chroma status check failed: {str(e)}"}
 
 @app.get("/version")
 async def version():
@@ -167,7 +200,8 @@ async def version():
             "sealed_workshop": "/v2/optimise, /v2/analyse",
             "analysis": "/analyse",
             "health": "/health",
-            "manifest": "/manifest"
+            "manifest": "/manifest",
+            "chroma_status": "/chroma-status"
         }
     }
 
@@ -187,4 +221,9 @@ async def global_exception_handler(request: Request, exc: Exception):
 # RUN
 # =====================
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=settings.port, reload=settings.debug)
+    uvicorn.run(
+        "main:app", 
+        host="0.0.0.0", 
+        port=settings.port, 
+        reload=settings.debug
+    )
