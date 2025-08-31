@@ -1,34 +1,29 @@
-# Compile with: pip-compile requirements.in
+# Forge API — Locked Python Requirements
+# Generated with: pip-compile requirements.in
 
-# Core Web/API stack
 fastapi==0.111.0
 uvicorn==0.30.1
 requests==2.32.3
 
-# Image + Video Processing
 numpy==1.26.4
 pillow==10.4.0
 opencv-python==4.10.0.84
 
-# AI/ML + Prompting
 accelerate==0.33.0
 transformers==4.44.2
 torch==2.3.1
 torchvision==0.18.1
 
-# Utility + Serialization
 typing-extensions==4.12.2
 pydantic==2.7.3
 pydantic-settings==2.10.1
 python-dotenv==1.0.1
 python-multipart==0.0.9
 
-# Monitoring + Safety
 huggingface-hub==0.24.6
 safetensors==0.4.4
 slowapi==0.1.9
 
-# Workflow + Dependency Management
 psutil==5.9.8
 pyyaml==6.0.1
 gunicorn==23.0.0
