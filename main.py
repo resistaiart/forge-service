@@ -9,33 +9,22 @@ import logging
 import os
 
 # Import existing modules
-from forge.prompts import optimise_prompt_package  # Corrected import path
-from forge.image_analysis import analyse_image, analyse_sealed   # 🔥 added analyse_sealed
-from forge.workflows import optimise_i2i_package, optimise_t2v_package, optimise_i2v_package  # ✅ amended import
-
-# Import new sealed workshop orchestration
+from forge.prompts import optimise_prompt_package
+from forge.image_analysis import analyse_image, analyse_sealed
+from forge.workflows import optimise_i2i_package, optimise_t2v_package, optimise_i2v_package
 from forge.optimizer import optimise_sealed
-from forge.public_interface import PackageGoal  # Corrected import path
-
-# =====================
-# SETTINGS
-# =====================
-class Settings(BaseModel):
-    app_name: str = "Forge Service API"
-    cors_origins: str = os.getenv("CORS_ORIGINS", "*")
-    debug: bool = os.getenv("DEBUG", "False").lower() == "true"
-
-settings = Settings()
+from forge.public_interface import PackageGoal
+from forge.config import settings   # ✅ Reuse centralised config
 
 # =====================
 # APP INIT
 # =====================
-app = FastAPI(title=settings.app_name, version="2.0")
+app = FastAPI(title=settings.app_name, version=settings.version)
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins.split(","),
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -57,7 +46,7 @@ class OptimiseRequest(BaseModel):
 
 class AnalyseRequest(BaseModel):
     image_url: str = Field(..., description="The URL of the image to analyse")
-    mode: Literal["basic", "detailed", "tags"] = Field("basic", description="Analysis mode")   # 🔥 added "tags"
+    mode: Literal["basic", "detailed", "tags"] = Field("basic", description="Analysis mode")
 
 class StandardResponse(BaseModel):
     outcome: Literal["success", "error"]
@@ -65,7 +54,7 @@ class StandardResponse(BaseModel):
     message: Optional[str] = None
 
 # =====================
-# ROUTES - SEALED WORKSHOP (NEW)
+# ROUTES - SEALED WORKSHOP
 # =====================
 @app.post("/v2/optimise", response_model=StandardResponse)
 async def optimise_v2(request: OptimiseRequest):
@@ -83,7 +72,7 @@ async def optimise_v2(request: OptimiseRequest):
         logger.error(f"Sealed workshop error: {e}")
         return {"outcome": "error", "message": f"Internal optimization error: {str(e)}"}
 
-@app.post("/v2/analyse", response_model=StandardResponse)   # 🔥 NEW sealed route
+@app.post("/v2/analyse", response_model=StandardResponse)
 async def analyse_v2(request: AnalyseRequest):
     try:
         logger.info(f"Sealed analysis request: {request.image_url}")
@@ -95,7 +84,7 @@ async def analyse_v2(request: AnalyseRequest):
         return {"outcome": "error", "message": f"Internal analysis error: {str(e)}"}
 
 # =====================
-# ROUTES - LEGACY ENDPOINTS
+# LEGACY ENDPOINTS
 # =====================
 @app.post("/optimise", response_model=StandardResponse)
 @app.post("/t2i", response_model=StandardResponse)
@@ -162,7 +151,7 @@ async def analyse(request: AnalyseRequest):
         return {"outcome": "error", "message": f"Image analysis failed: {str(e)}"}
 
 # =====================
-# HEALTH & UTILITY ENDPOINTS
+# HEALTH & UTILITIES
 # =====================
 @app.get("/health", response_model=StandardResponse)
 async def health():
@@ -171,8 +160,8 @@ async def health():
 @app.get("/version")
 async def version():
     return {
-        "version": "2.0",
-        "service": "The Forge API",
+        "version": settings.version,
+        "service": settings.app_name,
         "endpoints": {
             "legacy": "/optimise, /t2i, /t2v, /optimise/i2i, /optimise/t2v",
             "sealed_workshop": "/v2/optimise, /v2/analyse",
@@ -184,11 +173,10 @@ async def version():
 
 @app.get("/manifest", response_class=FileResponse)
 async def serve_manifest():
-    """Serve the full Forge manifest as raw JSON"""
     return FileResponse("forge_manifest.json", media_type="application/json")
 
 # =====================
-# ERROR FALLBACK
+# ERROR HANDLER
 # =====================
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -199,4 +187,4 @@ async def global_exception_handler(request: Request, exc: Exception):
 # RUN
 # =====================
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
+    uvicorn.run("main:app", host="0.0.0.0", port=settings.port, reload=settings.debug)
