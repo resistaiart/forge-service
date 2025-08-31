@@ -39,15 +39,15 @@ class Settings(BaseSettings):
 
     @field_validator("cors_origins", mode="before")
     def parse_cors_origins(cls, v):
-        if isinstance(v, str):
-            if v.startswith("[") and v.endswith("]"):
-                try:
+        try:
+            if isinstance(v, str):
+                if v.startswith("[") and v.endswith("]"):
                     return json.loads(v)
-                except json.JSONDecodeError:
-                    logger.warning(f"Invalid JSON format for CORS_ORIGINS: {v}")
-                    return ["*"]
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+                return [origin.strip() for origin in v.split(",") if origin.strip()]
+            return v
+        except Exception as e:
+            logger.warning(f"Failed to parse CORS_ORIGINS: {v} ({e})")
+            return ["*"]
 
     @field_validator("chroma_server_cors_allow_origins", mode="before")
     def parse_chroma_cors_origins(cls, v):
